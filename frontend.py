@@ -1,5 +1,9 @@
-from tkinter import *
 from backend import *
+from tkinter import *
+import tkinter.font as Font
+import tkinter.messagebox as messagebox
+
+IMAGESPATH = "images/"
 
 def setUpHome():
 	newHome = SmartHome()
@@ -39,7 +43,7 @@ def setUpHome():
 	return newHome
 
 class SmartHomeSystem:
-	def __init__(self, home): 
+	def __init__(self, home):
 		if not isinstance(home, SmartHome):
 			raise ValueError("Home must be a SmartHome")
 
@@ -48,7 +52,20 @@ class SmartHomeSystem:
 
 		self.win = Tk()
 		self.win.title("Smart Home System")
-		self.win.geometry("500x200")
+		# self.win.geometry("500x200")
+		self.win.resizable(False, False)
+
+		self.font = Font.nametofont("TkDefaultFont")
+		self.font.configure(
+			family="Verdana",
+			size=11
+		)
+
+		self.monoFont = Font.nametofont("TkFixedFont")
+		self.monoFont.configure(
+			family="Lucida Console",
+			size=10
+		)
 
 		self.headerFrame = Frame(self.win)
 		self.headerFrame.grid(row=0, column=0, padx=10, pady=10)
@@ -59,6 +76,13 @@ class SmartHomeSystem:
 		self.footerFrame = Frame(self.win)
 		self.footerFrame.grid(row=2, column=0, padx=10, pady=10)
 
+
+		self.IMAGEPLUGON = PhotoImage(file=f"{IMAGESPATH}plugon.png")
+		self.IMAGEPLUGOFF = PhotoImage(file=f"{IMAGESPATH}plugoff.png")
+		self.IMAGEDOORBELLON = PhotoImage(file=f"{IMAGESPATH}doorbellon.png")
+		self.IMAGEDOORBELLOFF = PhotoImage(file=f"{IMAGESPATH}doorbelloff.png")
+		self.IMAGESLEEP = PhotoImage(file=f"{IMAGESPATH}sleep.png")
+		self.IMAGESLEEPOFF = PhotoImage(file=f"{IMAGESPATH}sleepoff.png")
 
 	def createStaticButtons(self):
 		"""Creates the buttons that will always be present"""
@@ -80,9 +104,9 @@ class SmartHomeSystem:
 		self.addDeviceButt = Button(
 			self.footerFrame,
 			text="Add device",
-			command=nI
+			command=self.addDevicePrompt
 		)
-		self.addDeviceButt.grid(row=0, column=0, padx=5)
+		self.addDeviceButt.grid(row=0, column=0)
 
 	def refreshDeviceList(self):
 		"""
@@ -105,62 +129,95 @@ class SmartHomeSystem:
 			noDevicesLabel.grid(row=0, column=0)
 			self.deviceWidgets.append(noDevicesLabel)
 
-	def createDeviceWidget(self, widgetArray, widget, device, i):
+	def createDeviceWidget(self, widgetList, parentFrame, device, i):
 		"""Creates a widget for a device"""
-		if not isinstance(widget, Frame):
+		if not isinstance(parentFrame, Frame):
 			raise ValueError("Widget must be a Frame")
 		
 		if not isinstance(device, SmartDevice):
 			raise ValueError("Device must be a SmartDevice")
-		
+				
 		deviceType = "Plug" if isinstance(device, SmartPlug) else "Doorbell"
-		deviceTypeLabel = Label(widget, text=deviceType, justify=LEFT, padx=5)
-		deviceTypeLabel.grid(row=i, column=0, sticky=W)
-		widgetArray.append(deviceTypeLabel)
+
+		if deviceType == "Plug":
+			deviceImage = self.IMAGEPLUGON if device.getSwitchedOn() else self.IMAGEPLUGOFF
+		elif deviceType == "Doorbell":
+			deviceImage = self.IMAGEDOORBELLON if device.getSwitchedOn() else self.IMAGEDOORBELLOFF
+
+		deviceTypeImage = Label(parentFrame, image=deviceImage, text=deviceType)
+		deviceTypeImage.grid(row=i, column=0, sticky=W, pady=5, padx=2.5)
+		widgetList.append(deviceTypeImage)
+
+		deviceTypeLabel = Label(parentFrame, text=deviceType)
+		deviceTypeLabel.grid(row=i, column=1, sticky=W, pady=5, padx=2.5)
+		widgetList.append(deviceTypeLabel)
 
 		statusText = "ON" if device.getSwitchedOn() else "OFF"	
-		statusLabel = Label(widget, text=statusText, justify=LEFT, padx=5)
-		statusLabel.grid(row=i, column=1, sticky=W)
-		widgetArray.append(statusLabel)
+		statusLabel = Label(parentFrame, text=statusText)
+		statusLabel.grid(row=i, column=2, sticky=W, pady=5, padx=2.5)
+		widgetList.append(statusLabel)
 
-		if deviceType == "SmartPlug":
-			consumptionText = f"Consumption: {device.getConsumptionRate()}"
-			consumptionLabel = Label(widget, text=consumptionText, justify=LEFT, padx=5)
-			consumptionLabel.grid(row=i, column=2)
-			widgetArray.append(consumptionLabel)
-		elif deviceType == "SmartDoorbell":
-			sleepStatus = "Sleeping" if device.getSleep() else "Awake"
-			sleepText = f"Sleep mode: {sleepStatus}"
-			sleepLabel = Label(widget, text=sleepText, justify=LEFT, padx=5)
-			sleepLabel.grid(row=i, column=3)
-			widgetArray.append(sleepLabel)
+		if deviceType == "Plug":
+			consumptionText = f"{device.getConsumptionRate()}W"
+			consumptionLabel = Label(parentFrame, text=consumptionText, font=self.monoFont)
+			consumptionLabel.grid(row=i, column=3, pady=5, padx=2.5)
+			widgetList.append(consumptionLabel)
+		elif deviceType == "Doorbell":
+			if device.getSleep():
+				# if sleeping
+				sleepImage = self.IMAGESLEEP
+				sleepText = "Sleeping"
+			else:
+				# if awake
+				sleepImage = self.IMAGESLEEPOFF
+				sleepText = "Not Sleeping"
 
+			sleepLabel = Label(parentFrame, image=sleepImage, text=sleepText, justify=LEFT)
+			sleepLabel.grid(row=i, column=3, sticky=W, pady=5, padx=2.5)
+			widgetList.append(sleepLabel)
+
+		
+		willBe = "off" if device.getSwitchedOn() else "on"
 		toggleButt = Button(
-			widget,
-			text="T",
+			parentFrame,
+			text=f"Turn {willBe}",
 			padx=5,
 			command=lambda: self.toggleDeviceAt(i)
 		)
-		toggleButt.grid(row=i, column=4)
-		widgetArray.append(toggleButt)
+		
+		toggleButt.grid(row=i, column=4, pady=5, padx=2.5)
+		widgetList.append(toggleButt)
 
 		editButt = Button(
-			widget,
-			text="E",
+			parentFrame,
+			text="Edit",
 			padx=5,
-			command=nI
+			command=lambda: self.editDevicePrompt(i)
 		)
-		editButt.grid(row=i, column=5)
-		widgetArray.append(editButt)
+		editButt.grid(row=i, column=5, pady=5, padx=2.5)
+		widgetList.append(editButt)
 
 		removeButt = Button(
-			widget,
+			parentFrame,
 			text="-",
 			padx=5,
+			fg="red",
 			command=lambda: self.removeDeviceAt(i)
 		)
-		removeButt.grid(row=i, column=6)
-		widgetArray.append(removeButt)
+		removeButt.grid(row=i, column=6, pady=5, padx=2.5)
+		widgetList.append(removeButt)
+
+	def turnOnDeviceAt(self, index):
+		"""Turns on the device at the given index"""
+		device = self.home.getDeviceAt(index)
+		device.switchedOn = True
+		self.refreshDeviceList()
+
+	def turnOffDeviceAt(self, index):
+		"""Turns off the device at the given index"""
+		device = self.home.getDeviceAt(index)
+		device.switchedOn = False
+		self.refreshDeviceList()
 
 	def toggleDeviceAt(self, index):
 		"""Toggles the device at the given index"""
@@ -170,8 +227,129 @@ class SmartHomeSystem:
 
 	def removeDeviceAt(self, index):
 		"""Removes the device at the given index"""
+		deviceType = "plug" if isinstance(self.home.getDeviceAt(index), SmartPlug) else "doorbell"
+
+		# create an "are you sure" messagebox
+		sure = messagebox.askyesno(title="Removing a device", message=f"Are you sure you want to remove this {deviceType}?")
+		if not sure:
+			return
+		
 		self.home.removeDevice(index)
 		self.refreshDeviceList()
+	
+	def addPlug(self, addWin, consumption):
+		"""Adds a plug to the home"""
+		if consumption < 0 or consumption > 150:
+			messagebox.showwarning(title="Check your values!", text="Consumption rate must be between 0 and 150")
+			return
+
+		self.home.addDevice(SmartPlug(consumption))
+		addWin.destroy()
+		self.refreshDeviceList()
+
+	def editPlug(self, editWin, index, consumption):
+		"""Edits a plug at the given index"""
+		if consumption < 0 or consumption > 150:
+			messagebox.showwarning(title="Check your values!", text="Consumption rate must be between 0 and 150")
+			return
+
+		self.home.getDeviceAt(index).setConsumptionRate(consumption)
+		editWin.destroy()
+		self.refreshDeviceList()
+
+	def editDoorbell(self, editWin, index, sleepMode):
+		"""Edits a doorbell at the given index"""
+		self.home.getDeviceAt(index).setSleep(sleepMode)
+		editWin.destroy()
+		self.refreshDeviceList()
+
+	def addDoorbell(self, addWin):
+		"""Adds a doorbell to the home"""
+		self.home.addDevice(SmartDoorbell())
+		addWin.destroy()
+		self.refreshDeviceList()
+
+	def addDevicePrompt(self):
+		"""Adds a device to the home, based on user selection"""
+		addWin = Toplevel(self.win)
+		addWin.title("Add a device")
+		addWin.resizable(False, False)
+		
+		consumptionText = Label(addWin, text="Consumption rate, if adding a plug:")
+		consumptionText.pack(padx=10, pady=10)
+
+		consumption = IntVar(value=0)
+		consumptionEntry = Spinbox(
+			addWin,
+			from_=0,
+			to=150,
+			textvariable=consumption,
+			wrap=True
+		)
+		consumptionEntry.pack(padx=10, pady=10)
+
+		addPlugButt = Button(
+			addWin,
+			text="Add a plug",
+			command=lambda: self.addPlug(addWin, consumption.get())
+		)
+		addPlugButt.pack(side=LEFT, padx=10, pady=20)
+		
+		addDoorbellButt = Button(
+			addWin,
+			text="Add a doorbell",
+			command=lambda: self.addDoorbell(addWin)
+		)
+		addDoorbellButt.pack(side=RIGHT, padx=10, pady=20)
+
+		addWin.mainloop()
+
+	def editDevicePrompt(self, index):
+		"""Edits a device at the given index"""
+		device = self.home.getDeviceAt(index)
+		deviceType = "plug" if isinstance(device, SmartPlug) else "doorbell"
+
+		editWin = Toplevel(self.win)
+		editWin.title(f"Edit {deviceType}")
+		editWin.resizable(False, False)
+
+		if deviceType == "plug":
+			consumptionText = Label(editWin, text="Consumption rate:")
+			consumptionText.pack(padx=10, pady=10)
+
+			consumption = IntVar(value=device.getConsumptionRate())
+			consumptionEntry = Spinbox(
+				editWin,
+				from_=0,
+				to=150,
+				textvariable=consumption,
+				wrap=True
+			)
+			consumptionEntry.pack(padx=10, pady=10)
+
+			editButt = Button(
+				editWin,
+				text="Edit",
+				command=lambda: self.editPlug(editWin, index, consumption.get())
+			)
+			editButt.pack(padx=10, pady=10)
+		elif deviceType == "doorbell":
+			sleepMode = BooleanVar(value=device.getSleep())
+			sleepCheck = Checkbutton(
+				editWin,
+				text="Sleep mode",
+				variable=sleepMode
+			)
+			sleepCheck.pack(padx=10, pady=10)
+
+			editButt = Button(
+				editWin,
+				text="Edit",
+				command=lambda: self.editDoorbell(editWin, index, sleepMode.get())
+			)
+			editButt.pack(padx=10, pady=10)
+
+		editWin.mainloop()
 
 	def turnOnAll(self):
 		"""Turns on all devices"""
