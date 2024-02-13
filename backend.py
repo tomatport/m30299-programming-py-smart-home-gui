@@ -72,6 +72,12 @@ class SmartHome():
 
 		self.devices.append(device)
 
+	def removeDevice(self, index):
+		if index < 0 or index >= len(self.devices):
+			raise ValueError("Index out of range")
+
+		self.devices.pop(index)
+
 	def toggleSwitch(self, index):
 		if index < 0 or index >= len(self.devices):
 			raise ValueError("Index out of range")
