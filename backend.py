@@ -4,12 +4,30 @@ class SmartDevice:
 	"""
 	def __init__(self):
 		self.switchedOn = False
+		self.schedule = []
+
+		for i in range(24): # 0 - 23
+			self.schedule.append(2)
 
 	def toggleSwitch(self):
 		self.switchedOn = not self.switchedOn
 
 	def getSwitchedOn(self):
 		return self.switchedOn
+	
+	def getSchedule(self):
+		return self.schedule
+	
+	def getScheduleText(self):
+		out = ""
+		for i in range(24):
+			out += f"{self.schedule[i]};"
+		return out
+
+	def setActionAtHour(self, hour, action):
+		if hour < 0 or hour > 23:
+			raise ValueError("Hour must be between 0 and 23")
+		self.schedule[hour] = action
 
 class SmartPlug(SmartDevice):
 	def __init__(self, consumptionRate=0):
@@ -30,7 +48,7 @@ class SmartPlug(SmartDevice):
 			self.consumptionRate = consumptionRate
 
 	def getCSVRow(self):
-		return f"SmartPlug, {self.getSwitchedOn()}, {self.getConsumptionRate()}"
+		return f"SmartPlug, {self.getSwitchedOn()}, {self.getScheduleText()}, {self.getConsumptionRate()}"
 
 	def __str__(self):
 		out = "SmartPlug"
@@ -54,7 +72,7 @@ class SmartDoorbell(SmartDevice):
 			raise ValueError("Sleep mode must be True or False")
 
 	def getCSVRow(self):
-		return f"SmartDoorbell, {self.getSwitchedOn()}, {self.getSleep()}"
+		return f"SmartDoorbell, {self.getSwitchedOn()}, {self.getScheduleText()}, {self.getSleep()}"
 
 	def __str__(self):
 		out = "SmartDoorbell"
@@ -99,7 +117,7 @@ class SmartHome():
 			device.switchedOn = True
 
 	def getCSV(self):
-		out = "DeviceType, Switched On, Consumption Rate or Sleep State\n"
+		out = "DeviceType, Switched On, Schedule, Consumption Rate or Sleep State\n"
 		for device in self.devices:
 			out += f"{device.getCSVRow()}\n"
 		return out
@@ -110,11 +128,12 @@ class SmartHome():
 		for line in csv:
 			if not line:
 				continue
-			
+
 			device = line.split(", ")
 			deviceType = device[0]
 			switchedOn = device[1]
-			option = device[2]
+			schedule = device[2]
+			option = device[3]
 
 			if deviceType == "SmartPlug":
 				newDevice = SmartPlug(int(option))
@@ -130,6 +149,10 @@ class SmartHome():
 			if switchedOn == "True":
 				newDevice.toggleSwitch()
 			
+			schedule = schedule.split(";")
+			for i in range(24):
+				newDevice.setActionAtHour(i, int(schedule[i]))
+
 			self.addDevice(newDevice)
 			
 

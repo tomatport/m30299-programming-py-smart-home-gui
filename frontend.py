@@ -3,6 +3,7 @@ from tkinter import *
 import tkinter.font as Font
 import tkinter.filedialog as FileDialog
 import tkinter.messagebox as MessageBox
+from tkinter.ttk import Combobox
 
 IMAGESPATH = "images/"
 
@@ -53,9 +54,19 @@ class SmartHomeSystem:
 
 		self.win = Tk()
 		self.win.title("Smart Home System")
-		# self.win.geometry("500x200")
 		self.win.resizable(False, False)
 
+		# make sections where our widgets will go
+		self.headerFrame = Frame(self.win)
+		self.headerFrame.grid(row=0, column=0, padx=10, pady=10)
+
+		self.devicesFrame = Frame(self.win)
+		self.devicesFrame.grid(row=1, column=0, padx=10, pady=10)
+
+		self.footerFrame = Frame(self.win)
+		self.footerFrame.grid(row=2, column=0, padx=10, pady=10)
+
+		# set up fonts and images (must be done after creating the window)
 		self.font = Font.nametofont("TkDefaultFont")
 		self.font.configure(
 			family="Verdana",
@@ -68,16 +79,6 @@ class SmartHomeSystem:
 			size=10
 		)
 
-		self.headerFrame = Frame(self.win)
-		self.headerFrame.grid(row=0, column=0, padx=10, pady=10)
-
-		self.devicesFrame = Frame(self.win)
-		self.devicesFrame.grid(row=1, column=0, padx=10, pady=10)
-
-		self.footerFrame = Frame(self.win)
-		self.footerFrame.grid(row=2, column=0, padx=10, pady=10)
-
-
 		self.IMAGEPLUGON = PhotoImage(file=f"{IMAGESPATH}plugon.png")
 		self.IMAGEPLUGOFF = PhotoImage(file=f"{IMAGESPATH}plugoff.png")
 		self.IMAGEDOORBELLON = PhotoImage(file=f"{IMAGESPATH}doorbellon.png")
@@ -85,43 +86,53 @@ class SmartHomeSystem:
 		self.IMAGESLEEP = PhotoImage(file=f"{IMAGESPATH}sleep.png")
 		self.IMAGESLEEPOFF = PhotoImage(file=f"{IMAGESPATH}sleepoff.png")
 
+		# time to be used for scheduling
+		self.time = 0
+		self.timeLabel = Label(
+			self.win,
+			text=self.getTimeString(),
+			font=self.monoFont
+		)
+
 	def createStaticButtons(self):
 		"""Creates the buttons that will always be present"""
-		self.turnOnAllButt = Button(
+		turnOnAllButt = Button(
 			self.headerFrame,
 			text="Turn on all",
 			command=self.turnOnAll
 		)
-		self.turnOnAllButt.grid(row=0, column=0, padx=5)
+		turnOnAllButt.grid(row=0, column=0, padx=5)
 
-		self.turnOffAllButt = Button(
+		turnOffAllButt = Button(
 			self.headerFrame,
 			text="Turn off all",
 			command=self.turnOffAll
 		)
-		self.turnOffAllButt.grid(row=0, column=1, padx=5)
+		turnOffAllButt.grid(row=0, column=1, padx=5)
 
-		
-		self.addDeviceButt = Button(
+		# display the time here
+		self.timeLabel.grid(row=0, column=2, padx=5, sticky=E)
+
+		addDeviceButt = Button(
 			self.footerFrame,
 			text="Add device",
 			command=self.addDevicePrompt
 		)
-		self.addDeviceButt.grid(row=0, column=0)
+		addDeviceButt.grid(row=0, column=0)
 
-		self.importDevicesButt = Button(
+		importDevicesButt = Button(
 			self.footerFrame,
 			text="Import",
 			command=self.importDevices
 		)
-		self.importDevicesButt.grid(row=0, column=1)
+		importDevicesButt.grid(row=0, column=1)
 
-		self.exportDevicesButt = Button(
+		exportDevicesButt = Button(
 			self.footerFrame,
 			text="Export",
 			command=self.exportDevices
 		)
-		self.exportDevicesButt.grid(row=0, column=2)
+		exportDevicesButt.grid(row=0, column=2)
 
 	def refreshDeviceList(self):
 		"""
@@ -145,7 +156,7 @@ class SmartHomeSystem:
 			self.deviceWidgets.append(noDevicesLabel)
 
 	def createDeviceWidget(self, widgetList, parentFrame, device, i):
-		"""Creates a widget for a device"""
+		"""Creates a "widget" (row of items) for a device"""
 		if not isinstance(parentFrame, Frame):
 			raise ValueError("Widget must be a Frame")
 		
@@ -212,6 +223,15 @@ class SmartHomeSystem:
 		editButt.grid(row=i, column=5, pady=5, padx=2.5)
 		widgetList.append(editButt)
 
+		scheduleButt = Button(
+			parentFrame,
+			text="Schedule",
+			padx=5,
+			command=lambda: self.scheduleDevicePrompt(i)
+		)
+		scheduleButt.grid(row=i, column=6, pady=5, padx=2.5)
+		widgetList.append(scheduleButt)
+
 		removeButt = Button(
 			parentFrame,
 			text="-",
@@ -219,7 +239,7 @@ class SmartHomeSystem:
 			fg="red",
 			command=lambda: self.removeDeviceAt(i)
 		)
-		removeButt.grid(row=i, column=6, pady=5, padx=2.5)
+		removeButt.grid(row=i, column=7, pady=5, padx=2.5)
 		widgetList.append(removeButt)
 
 	def turnOnDeviceAt(self, index):
@@ -348,6 +368,7 @@ class SmartHomeSystem:
 				command=lambda: self.editPlug(editWin, index, consumption.get())
 			)
 			editButt.pack(padx=10, pady=10)
+
 		elif deviceType == "doorbell":
 			sleepMode = BooleanVar(value=device.getSleep())
 			sleepCheck = Checkbutton(
@@ -366,6 +387,44 @@ class SmartHomeSystem:
 
 		editWin.mainloop()
 
+	def scheduleDevicePrompt(self, index):
+		"""Schedules a device at the given index"""
+		device = self.home.getDeviceAt(index)
+		deviceType = "plug" if isinstance(device, SmartPlug) else "doorbell"
+		deviceSchedule = device.getSchedule()
+
+		scheduleWin = Toplevel(self.win)
+		scheduleWin.title(f"Schedule for {deviceType}")
+		scheduleWin.resizable(False, False)
+
+		timesFrame = Frame(scheduleWin)
+		timesFrame.grid(row=0, column=1, padx=10, pady=10)
+
+		for i in range(24): # 0 to 23
+			timeLabel = Label(timesFrame, text=f"{str(i).zfill(2)}:00")
+			timeLabel.grid(row=i, column=0, padx=2, pady=2)
+
+			options = ["Turn Off", "Turn On", "No Change"] # 0, 1, 2
+
+			actionCombo = Combobox(
+				timesFrame,
+				values=options,
+				width=10,
+				state="readonly"
+			)
+			actionCombo.current(deviceSchedule[i])
+
+			actionCombo.bind(
+				"<<ComboboxSelected>>",
+				lambda event, i=i, actionCombo=actionCombo: self.updateDeviceSchedule(index, i, actionCombo.current())
+			)
+
+			actionCombo.grid(row=i, column=1, padx=10, pady=10)
+	
+
+		scheduleWin.mainloop()
+
+
 	def turnOnAll(self):
 		"""Turns on all devices"""
 		self.home.turnOnAll()
@@ -375,6 +434,12 @@ class SmartHomeSystem:
 		"""Turns off all devices"""
 		self.home.turnOffAll()
 		self.refreshDeviceList()
+
+	def updateDeviceSchedule(self, index, hour, action):
+		"""Updates the schedule for a device at the given index"""
+		self.home.getDeviceAt(index).setActionAtHour(hour, action)
+		print(self.home.getDeviceAt(index).getSchedule())
+	
 
 	def exportDevices(self):
 		"""Exports the devices to a file"""
@@ -402,9 +467,35 @@ class SmartHomeSystem:
 		self.home.importCSV(content)
 		self.refreshDeviceList()
 
+	def tickTimer(self):
+		# update devices based on schedule
+		newTime = self.time + 1 if self.time < 23 else 0
+		self.time = newTime
+
+		devicesUpdated = False
+		devices = self.home.getDevices()
+		for device in devices:
+			if device.getSchedule()[newTime] == 0:
+				devicesUpdated = True
+				device.switchedOn = False
+			elif device.getSchedule()[newTime] == 1:
+				devicesUpdated = True
+				device.switchedOn = True
+
+		if devicesUpdated:
+			self.refreshDeviceList()
+
+		self.timeLabel.config(text=self.getTimeString())
+	
+		self.win.after(3000, self.tickTimer)
+
+	def getTimeString(self):
+		return f"{str(self.time).zfill(2)}:00"
+
 	def run(self):
 		self.createStaticButtons()
 		self.refreshDeviceList()
+		self.tickTimer()
 		self.win.mainloop()
 
 def main():
