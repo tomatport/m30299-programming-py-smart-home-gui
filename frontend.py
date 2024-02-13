@@ -109,19 +109,19 @@ class SmartHomeSystem:
 		)
 		self.addDeviceButt.grid(row=0, column=0)
 
-		self.exportDevicesButt = Button(
-			self.footerFrame,
-			text="Export devices",
-			command=self.exportDevices
-		)
-		self.exportDevicesButt.grid(row=0, column=1)
-
 		self.importDevicesButt = Button(
 			self.footerFrame,
-			text="Import devices",
+			text="Import",
 			command=self.importDevices
 		)
-		self.importDevicesButt.grid(row=0, column=2)
+		self.importDevicesButt.grid(row=0, column=1)
+
+		self.exportDevicesButt = Button(
+			self.footerFrame,
+			text="Export",
+			command=self.exportDevices
+		)
+		self.exportDevicesButt.grid(row=0, column=2)
 
 	def refreshDeviceList(self):
 		"""
