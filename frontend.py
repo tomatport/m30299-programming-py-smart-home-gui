@@ -1,7 +1,8 @@
 from backend import *
 from tkinter import *
 import tkinter.font as Font
-import tkinter.messagebox as messagebox
+import tkinter.filedialog as FileDialog
+import tkinter.messagebox as MessageBox
 
 IMAGESPATH = "images/"
 
@@ -107,6 +108,20 @@ class SmartHomeSystem:
 			command=self.addDevicePrompt
 		)
 		self.addDeviceButt.grid(row=0, column=0)
+
+		self.exportDevicesButt = Button(
+			self.footerFrame,
+			text="Export devices",
+			command=self.exportDevices
+		)
+		self.exportDevicesButt.grid(row=0, column=1)
+
+		self.importDevicesButt = Button(
+			self.footerFrame,
+			text="Import devices",
+			command=self.importDevices
+		)
+		self.importDevicesButt.grid(row=0, column=2)
 
 	def refreshDeviceList(self):
 		"""
@@ -230,7 +245,7 @@ class SmartHomeSystem:
 		deviceType = "plug" if isinstance(self.home.getDeviceAt(index), SmartPlug) else "doorbell"
 
 		# create an "are you sure" messagebox
-		sure = messagebox.askyesno(title="Removing a device", message=f"Are you sure you want to remove this {deviceType}?")
+		sure = MessageBox.askyesno(title="Removing a device", message=f"Are you sure you want to remove this {deviceType}?")
 		if not sure:
 			return
 		
@@ -240,7 +255,7 @@ class SmartHomeSystem:
 	def addPlug(self, addWin, consumption):
 		"""Adds a plug to the home"""
 		if consumption < 0 or consumption > 150:
-			messagebox.showwarning(title="Check your values!", text="Consumption rate must be between 0 and 150")
+			MessageBox.showwarning(title="Check your values!", text="Consumption rate must be between 0 and 150")
 			return
 
 		self.home.addDevice(SmartPlug(consumption))
@@ -250,7 +265,7 @@ class SmartHomeSystem:
 	def editPlug(self, editWin, index, consumption):
 		"""Edits a plug at the given index"""
 		if consumption < 0 or consumption > 150:
-			messagebox.showwarning(title="Check your values!", text="Consumption rate must be between 0 and 150")
+			MessageBox.showwarning(title="Check your values!", text="Consumption rate must be between 0 and 150")
 			return
 
 		self.home.getDeviceAt(index).setConsumptionRate(consumption)
@@ -361,13 +376,36 @@ class SmartHomeSystem:
 		self.home.turnOffAll()
 		self.refreshDeviceList()
 
+	def exportDevices(self):
+		"""Exports the devices to a file"""
+		content = self.home.getCSV()
+		file = FileDialog.asksaveasfile(
+			mode="w",
+			defaultextension=".csv",
+			filetypes=[("CSV files", "*.csv")]
+		)
+		if file is None:
+			return
+		file.write(content)
+		file.close()
+
+	def importDevices(self):
+		"""Imports devices from a file"""
+		file = FileDialog.askopenfile(
+			mode="r",
+			filetypes=[("CSV files", "*.csv")]
+		)
+		if file is None:
+			return
+		content = file.read()
+		file.close()
+		self.home.importCSV(content)
+		self.refreshDeviceList()
+
 	def run(self):
 		self.createStaticButtons()
 		self.refreshDeviceList()
 		self.win.mainloop()
-
-def nI():
-	print("Not implemented")
 
 def main():
 	# home = setUpHome()

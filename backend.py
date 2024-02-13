@@ -29,6 +29,9 @@ class SmartPlug(SmartDevice):
 		else:
 			self.consumptionRate = consumptionRate
 
+	def getCSVRow(self):
+		return f"SmartPlug, {self.getSwitchedOn()}, {self.getConsumptionRate()}"
+
 	def __str__(self):
 		out = "SmartPlug"
 		out += f"\n   switched on: {self.getSwitchedOn()}"
@@ -49,6 +52,9 @@ class SmartDoorbell(SmartDevice):
 			self.sleepMode = sleepMode
 		else:
 			raise ValueError("Sleep mode must be True or False")
+
+	def getCSVRow(self):
+		return f"SmartDoorbell, {self.getSwitchedOn()}, {self.getSleep()}"
 
 	def __str__(self):
 		out = "SmartDoorbell"
@@ -91,6 +97,41 @@ class SmartHome():
 	def turnOnAll(self):
 		for device in self.devices:
 			device.switchedOn = True
+
+	def getCSV(self):
+		out = "DeviceType, Switched On, Consumption Rate or Sleep State\n"
+		for device in self.devices:
+			out += f"{device.getCSVRow()}\n"
+		return out
+	
+	def importCSV(self, csv):
+		# remove first line
+		csv = csv.split("\n")[1:]
+		for line in csv:
+			if not line:
+				continue
+			
+			device = line.split(", ")
+			deviceType = device[0]
+			switchedOn = device[1]
+			option = device[2]
+
+			if deviceType == "SmartPlug":
+				newDevice = SmartPlug(int(option))
+			elif deviceType == "SmartDoorbell":
+				newDevice = SmartDoorbell()
+				if option == "True":
+					newDevice.setSleep(True)
+				else:
+					newDevice.setSleep(False)
+			else:
+				raise ValueError("Invalid device type")
+
+			if switchedOn == "True":
+				newDevice.toggleSwitch()
+			
+			self.addDevice(newDevice)
+			
 
 	def __str__(self):
 		out = "SmartHome"
