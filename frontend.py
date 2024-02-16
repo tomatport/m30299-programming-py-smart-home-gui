@@ -91,33 +91,50 @@ class SmartHomeSystem:
 		self.IMAGEDOORBELLOFF = PhotoImage(file=f"{IMAGESPATH}doorbelloff.png")
 		self.IMAGESLEEP = PhotoImage(file=f"{IMAGESPATH}sleep.png")
 		self.IMAGESLEEPOFF = PhotoImage(file=f"{IMAGESPATH}sleepoff.png")
+		self.IMAGEIMPORT = PhotoImage(file=f"{IMAGESPATH}import.png")
+		self.IMAGEEXPORT = PhotoImage(file=f"{IMAGESPATH}export.png")
+		self.IMAGEADD = PhotoImage(file=f"{IMAGESPATH}add.png")
+		self.IMAGECLOCK = PhotoImage(file=f"{IMAGESPATH}clock.png")
 
 		# also set up the time and its label here
+		self.timeIcon = Label(self.headerFrame, image=self.IMAGECLOCK)
+		self.timeIcon.grid(row=0, column=4, padx=5)
+
 		self.time = 0
 		self.timeLabel = Label(
 			self.headerFrame,
 			text=self.getTimeString(),
 			font=self.monoFont
 		)
-		self.timeLabel.grid(row=0, column=2, padx=5, sticky=E)
+		self.timeLabel.grid(row=0, column=5, padx=5, sticky=E)
 
 	def createStaticButtons(self):
 		"""Creates the buttons that will always be present in the GUI"""
 
 		# turn on/off all devices in the header
+		turnOnIcon = Label(self.headerFrame, image=self.IMAGEPLUGON)
+		turnOnIcon.grid(row=0, column=0, padx=5)
+
 		turnOnAllButt = Button(
 			self.headerFrame,
 			text="Turn on all",
 			command=self.turnOnAll
 		)
-		turnOnAllButt.grid(row=0, column=0, padx=5)
+		turnOnAllButt.grid(row=0, column=1, padx=5)
+
+		turnOffIcon = Label(self.headerFrame, image=self.IMAGEPLUGOFF)
+		turnOffIcon.grid(row=0, column=2, padx=5)
 
 		turnOffAllButt = Button(
 			self.headerFrame,
 			text="Turn off all",
 			command=self.turnOffAll
 		)
-		turnOffAllButt.grid(row=0, column=1, padx=5)
+		turnOffAllButt.grid(row=0, column=3, padx=5)
+
+
+		addDeviceIcon = Label(self.footerFrame, image=self.IMAGEADD)
+		addDeviceIcon.grid(row=0, column=0, padx=5)
 
 		# add, import, and export devices in the footer
 		addDeviceButt = Button(
@@ -125,21 +142,27 @@ class SmartHomeSystem:
 			text="Add device",
 			command=self.addDevicePrompt
 		)
-		addDeviceButt.grid(row=0, column=0, padx=5)
+		addDeviceButt.grid(row=0, column=1, padx=5)
+
+		importIcon = Label(self.footerFrame, image=self.IMAGEIMPORT)
+		importIcon.grid(row=0, column=2, padx=5)
 
 		importDevicesButt = Button(
 			self.footerFrame,
 			text="Import",
 			command=self.importDevices
 		)
-		importDevicesButt.grid(row=0, column=1)
+		importDevicesButt.grid(row=0, column=3)
+
+		exportIcon = Label(self.footerFrame, image=self.IMAGEEXPORT)
+		exportIcon.grid(row=0, column=4, padx=5)
 
 		exportDevicesButt = Button(
 			self.footerFrame,
 			text="Export",
 			command=self.exportDevices
 		)
-		exportDevicesButt.grid(row=0, column=2, padx=5)
+		exportDevicesButt.grid(row=0, column=5, padx=5)
 
 	def refreshDeviceList(self):
 		"""
