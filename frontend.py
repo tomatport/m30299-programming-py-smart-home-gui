@@ -53,7 +53,7 @@ class SmartHomeSystem:
 			raise ValueError("Home must be a SmartHome")
 
 		self.home = home
-		self.deviceWidgets = []
+		self.deviceWidgets = [] # list of widgets to be destroyed on refresh
 
 		self.win = Tk()
 		self.win.title("Smart Home System")
@@ -112,8 +112,8 @@ class SmartHomeSystem:
 		"""Creates the buttons that will always be present in the GUI"""
 
 		# turn on/off all devices in the header
-		turnOnIcon = Label(self.headerFrame, image=self.IMAGEPLUGON)
-		turnOnIcon.grid(row=0, column=0, padx=5)
+		turnOnAllIcon = Label(self.headerFrame, image=self.IMAGEPLUGON)
+		turnOnAllIcon.grid(row=0, column=0, padx=5)
 
 		turnOnAllButt = Button(
 			self.headerFrame,
@@ -122,8 +122,8 @@ class SmartHomeSystem:
 		)
 		turnOnAllButt.grid(row=0, column=1, padx=5)
 
-		turnOffIcon = Label(self.headerFrame, image=self.IMAGEPLUGOFF)
-		turnOffIcon.grid(row=0, column=2, padx=5)
+		turnOffAllIcon = Label(self.headerFrame, image=self.IMAGEPLUGOFF)
+		turnOffAllIcon.grid(row=0, column=2, padx=5)
 
 		turnOffAllButt = Button(
 			self.headerFrame,
@@ -132,37 +132,36 @@ class SmartHomeSystem:
 		)
 		turnOffAllButt.grid(row=0, column=3, padx=5)
 
-
-		addDeviceIcon = Label(self.footerFrame, image=self.IMAGEADD)
-		addDeviceIcon.grid(row=0, column=0, padx=5)
-
 		# add, import, and export devices in the footer
-		addDeviceButt = Button(
+		addIcon = Label(self.footerFrame, image=self.IMAGEADD)
+		addIcon.grid(row=0, column=0, padx=5)
+
+		addButt = Button(
 			self.footerFrame,
 			text="Add device",
 			command=self.addDevicePrompt
 		)
-		addDeviceButt.grid(row=0, column=1, padx=5)
+		addButt.grid(row=0, column=1, padx=5)
 
 		importIcon = Label(self.footerFrame, image=self.IMAGEIMPORT)
 		importIcon.grid(row=0, column=2, padx=5)
 
-		importDevicesButt = Button(
+		importButt = Button(
 			self.footerFrame,
 			text="Import",
 			command=self.importDevices
 		)
-		importDevicesButt.grid(row=0, column=3)
+		importButt.grid(row=0, column=3)
 
 		exportIcon = Label(self.footerFrame, image=self.IMAGEEXPORT)
 		exportIcon.grid(row=0, column=4, padx=5)
 
-		exportDevicesButt = Button(
+		exportButt = Button(
 			self.footerFrame,
 			text="Export",
 			command=self.exportDevices
 		)
-		exportDevicesButt.grid(row=0, column=5, padx=5)
+		exportButt.grid(row=0, column=5, padx=5)
 
 	def refreshDeviceList(self):
 		"""
@@ -291,7 +290,7 @@ class SmartHomeSystem:
 			statusTextVar.set("OFF")
 			willBeVar.set("Turn on")
 
-		# no need to refresh since the Tkinter variables are updated in-place
+		self.refreshDeviceList()
 	
 	def turnOnAll(self):
 		"""Turns on all devices"""
