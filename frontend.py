@@ -1,8 +1,6 @@
 from backend import *
 from tkinter import *
-import tkinter.font as Font
-import tkinter.filedialog as FileDialog
-import tkinter.messagebox as MessageBox
+from tkinter import messagebox, filedialog, font
 from tkinter.ttk import Combobox
 
 IMAGESPATH = "images/"
@@ -71,14 +69,14 @@ class SmartHomeSystem:
 
 		# set up fonts and images (must be done after creating the window)
 		# this changes the default font for everything
-		self.font = Font.nametofont("TkDefaultFont")
+		self.font = font.nametofont("TkDefaultFont")
 		self.font.configure(
 			family="Verdana",
 			size=11
 		)
 
 		# this changes the default monospace font for everything
-		self.monoFont = Font.nametofont("TkFixedFont")
+		self.monoFont = font.nametofont("TkFixedFont")
 		self.monoFont.configure(
 			family="Lucida Console",
 			size=10
@@ -195,29 +193,33 @@ class SmartHomeSystem:
 				
 		deviceType = "Plug" if isinstance(device, SmartPlug) else "Doorbell"
 
+		indexLabel = Label(parentFrame, text=str(i))
+		indexLabel.grid(row=i, column=0, sticky=W, pady=5, padx=2.5)
+		widgetList.append(indexLabel)
+
 		if deviceType == "Plug":
 			deviceImage = self.IMAGEPLUGON if device.getSwitchedOn() else self.IMAGEPLUGOFF
 		elif deviceType == "Doorbell":
 			deviceImage = self.IMAGEDOORBELLON if device.getSwitchedOn() else self.IMAGEDOORBELLOFF
 
 		deviceTypeImage = Label(parentFrame, image=deviceImage, text=deviceType)
-		deviceTypeImage.grid(row=i, column=0, sticky=W, pady=5, padx=2.5)
+		deviceTypeImage.grid(row=i, column=1, sticky=W, pady=5, padx=2.5)
 		widgetList.append(deviceTypeImage) # add it to a list so we can destroy it later on refresh
 
 		deviceTypeLabel = Label(parentFrame, text=deviceType)
-		deviceTypeLabel.grid(row=i, column=1, sticky=W, pady=5, padx=2.5)
+		deviceTypeLabel.grid(row=i, column=2, sticky=W, pady=5, padx=2.5)
 		widgetList.append(deviceTypeLabel)
 
 		statusText = "ON" if device.getSwitchedOn() else "OFF"
 		statusTextVar = StringVar(value=statusText)
 		statusLabel = Label(parentFrame, textvariable=statusTextVar)
-		statusLabel.grid(row=i, column=2, sticky=W, pady=5, padx=2.5)
+		statusLabel.grid(row=i, column=3, sticky=W, pady=5, padx=2.5)
 		widgetList.append(statusLabel)
 
 		if deviceType == "Plug":
 			consumptionText = f"{device.getConsumptionRate()}W"
 			consumptionLabel = Label(parentFrame, text=consumptionText, font=self.monoFont)
-			consumptionLabel.grid(row=i, column=3, pady=5, padx=2.5)
+			consumptionLabel.grid(row=i, column=4, pady=5, padx=2.5)
 			widgetList.append(consumptionLabel)
 		elif deviceType == "Doorbell":
 			if device.getSleep():
@@ -230,7 +232,7 @@ class SmartHomeSystem:
 				sleepText = "Not Sleeping"
 
 			sleepLabel = Label(parentFrame, image=sleepImage, text=sleepText, justify=LEFT)
-			sleepLabel.grid(row=i, column=3, sticky=W, pady=5, padx=2.5)
+			sleepLabel.grid(row=i, column=4, sticky=W, pady=5, padx=2.5)
 			widgetList.append(sleepLabel)
 
 		
@@ -243,7 +245,7 @@ class SmartHomeSystem:
 			command=lambda: self.toggleDeviceAt(i, statusTextVar, willBeVar)
 		)
 		
-		toggleButt.grid(row=i, column=4, pady=5, padx=2.5)
+		toggleButt.grid(row=i, column=5, pady=5, padx=2.5)
 		widgetList.append(toggleButt)
 
 		editButt = Button(
@@ -252,7 +254,7 @@ class SmartHomeSystem:
 			padx=5,
 			command=lambda: self.editDevicePrompt(i, statusTextVar, willBeVar)
 		)
-		editButt.grid(row=i, column=5, pady=5, padx=2.5)
+		editButt.grid(row=i, column=6, pady=5, padx=2.5)
 		widgetList.append(editButt)
 
 		scheduleButt = Button(
@@ -261,17 +263,17 @@ class SmartHomeSystem:
 			padx=5,
 			command=lambda: self.scheduleDevicePrompt(i)
 		)
-		scheduleButt.grid(row=i, column=6, pady=5, padx=2.5)
+		scheduleButt.grid(row=i, column=7, pady=5, padx=2.5)
 		widgetList.append(scheduleButt)
 
 		removeButt = Button(
 			parentFrame,
-			text="-",
+			text="Remove",
 			padx=5,
 			fg="red",
 			command=lambda: self.removeDeviceAt(i)
 		)
-		removeButt.grid(row=i, column=7, pady=5, padx=2.5)
+		removeButt.grid(row=i, column=8, pady=5, padx=2.5)
 		widgetList.append(removeButt)
 
 	############################################
@@ -307,7 +309,10 @@ class SmartHomeSystem:
 		deviceType = "plug" if isinstance(self.home.getDeviceAt(index), SmartPlug) else "doorbell"
 
 		# create an "are you sure" messagebox
-		sure = MessageBox.askyesno(title="Removing a device", message=f"Are you sure you want to remove this {deviceType}?")
+		sure = messagebox.askyesno(
+			title="Removing a device",
+			message=f"Are you sure you want to remove this {deviceType}?"
+		)
 		if not sure:
 			return
 		
@@ -357,8 +362,10 @@ class SmartHomeSystem:
 		"""From the add window, adds a plug to the home, then destroys the window and refreshes the device list"""
 
 		if consumption < 0 or consumption > 150:
-			MessageBox.showwarning(title="Check your values!",
-			                       message="Consumption rate must be between 0 and 150")
+			messagebox.showwarning(
+				title="Check your values!",
+				message="Consumption rate must be between 0 and 150"
+			)
 			return
 
 		self.home.addDevice(SmartPlug(consumption))
@@ -443,8 +450,10 @@ class SmartHomeSystem:
 		then destroys the window and refreshes the device list
 		"""
 		if consumption < 0 or consumption > 150:
-			MessageBox.showwarning(title="Check your values!",
-			                       message="Consumption rate must be between 0 and 150")
+			messagebox.showwarning(
+				title="Check your values!",
+				message="Consumption rate must be between 0 and 150"
+			)
 			return
 
 		self.home.getDeviceAt(index).setConsumptionRate(consumption)
@@ -538,7 +547,7 @@ class SmartHomeSystem:
 	def exportDevices(self):
 		"""Lets the user export the devices to a CSV file after choosing a location"""
 		content = self.home.getCSV()
-		file = FileDialog.asksaveasfile(
+		file = filedialog.asksaveasfile(
 			mode="w",
 			defaultextension=".csv",
 			filetypes=[("CSV files", "*.csv")]
@@ -548,12 +557,12 @@ class SmartHomeSystem:
 			file.write(content)
 			file.close()
 		except Exception as e:
-			MessageBox.showerror(title="Error Writing File", message=f"{e}")
+			messagebox.showerror(title="Error Writing File", message=f"{e}")
 			return
 
 	def importDevices(self):
 		"""Prompts the user to import devices from a file"""
-		file = FileDialog.askopenfile(
+		file = filedialog.askopenfile(
 			mode="r",
 			filetypes=[("CSV files", "*.csv")]
 		)
@@ -562,7 +571,7 @@ class SmartHomeSystem:
 			content = file.read()
 			file.close()
 		except Exception as e:
-			MessageBox.showerror(title="Error Reading File", message=f"{e}")
+			messagebox.showerror(title="Error Reading File", message=f"{e}")
 			return
 		
 		self.home.importCSV(content)
