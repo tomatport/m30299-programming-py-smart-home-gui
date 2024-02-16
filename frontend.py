@@ -8,43 +8,46 @@ from tkinter.ttk import Combobox
 IMAGESPATH = "images/"
 
 def setUpHome():
+	"""Sets up a home with 5 devices via shell input, returns the home"""
+
 	newHome = SmartHome()
+	print("🏡 Setting up your Smart Home")
 
-	# allow the user to populate it with 5 devices
+	# allow the user to populate home with 5 devices
 	while len(newHome.getDevices()) < 5:
-		print(f"🏡 Adding device {len(newHome.getDevices()) + 1}/5")
-		choice = input("Enter 1 for SmartPlug, 2 for SmartDoorbell: ")
+		print(f"\n➕ Adding device {len(newHome.getDevices()) + 1}/5")
+		choice = input("Enter 'plug' for SmartPlug, 'doorbell' for SmartDoorbell: ")
+		choice = choice.lower().replace(" ", "")
 
-		if not choice.isdigit():
-			print("⚠️ You must enter a number!")
-			continue
-
-		if int(choice) == 1:
+		if choice == "plug":
 			print("🔌 Adding a SmartPlug")
 			
-			consumptionRate = input("Enter the consumption rate of the plug: ")
-			while not consumptionRate.isdigit():
-				print("⚠️ Consumption rate must be a number")
+			while True: # keep asking until valid
 				consumptionRate = input("Enter the consumption rate of the plug: ")
-			
-			consumptionRate = int(consumptionRate)
+				
+				if consumptionRate.isdigit() and int(consumptionRate) >= 0 and int(consumptionRate) <= 150:
+					consumptionRate = int(consumptionRate)
+					break
 
-			if consumptionRate < 0 or consumptionRate > 150:
-				print("⚠️ Consumption rate must be between 0 and 150")
-				continue
+				print("⚠️ Consumption rate must be a number between 0 and 150!")
+			
 
 			newHome.addDevice(SmartPlug(consumptionRate))
 			print(f"🔌 Added a SmartPlug, with consumption rate of {consumptionRate}")
 
-		elif int(choice) == 2:
+		elif choice == "doorbell":
+			# no questions to ask for a doorbell
 			newHome.addDevice(SmartDoorbell())
 			print("🔔 Added a SmartDoorbell")
+
 		else:
-			print("⚠️ You must enter 1 or 2!")
+			print("⚠️ You must enter 'plug' or 'doorbell'!")
 
 	return newHome
 
 class SmartHomeSystem:
+	"""Represents the smart home system as whole, with a GUI frontend"""
+
 	def __init__(self, home):
 		if not isinstance(home, SmartHome):
 			raise ValueError("Home must be a SmartHome")
@@ -56,7 +59,7 @@ class SmartHomeSystem:
 		self.win.title("Smart Home System")
 		self.win.resizable(False, False)
 
-		# make sections where our widgets will go
+		# make section frames where our widgets will go
 		self.headerFrame = Frame(self.win)
 		self.headerFrame.grid(row=0, column=0, padx=10, pady=10)
 
@@ -67,18 +70,21 @@ class SmartHomeSystem:
 		self.footerFrame.grid(row=2, column=0, padx=10, pady=10)
 
 		# set up fonts and images (must be done after creating the window)
+		# this changes the default font for everything
 		self.font = Font.nametofont("TkDefaultFont")
 		self.font.configure(
 			family="Verdana",
 			size=11
 		)
 
+		# this changes the default monospace font for everything
 		self.monoFont = Font.nametofont("TkFixedFont")
 		self.monoFont.configure(
 			family="Lucida Console",
 			size=10
 		)
 
+		# here are all of our images for the devices, to be used in the GUI
 		self.IMAGEPLUGON = PhotoImage(file=f"{IMAGESPATH}plugon.png")
 		self.IMAGEPLUGOFF = PhotoImage(file=f"{IMAGESPATH}plugoff.png")
 		self.IMAGEDOORBELLON = PhotoImage(file=f"{IMAGESPATH}doorbellon.png")
@@ -86,16 +92,19 @@ class SmartHomeSystem:
 		self.IMAGESLEEP = PhotoImage(file=f"{IMAGESPATH}sleep.png")
 		self.IMAGESLEEPOFF = PhotoImage(file=f"{IMAGESPATH}sleepoff.png")
 
-		# time to be used for scheduling
+		# also set up the time and its label here
 		self.time = 0
 		self.timeLabel = Label(
-			self.win,
+			self.headerFrame,
 			text=self.getTimeString(),
 			font=self.monoFont
 		)
+		self.timeLabel.grid(row=0, column=2, padx=5, sticky=E)
 
 	def createStaticButtons(self):
-		"""Creates the buttons that will always be present"""
+		"""Creates the buttons that will always be present in the GUI"""
+
+		# turn on/off all devices in the header
 		turnOnAllButt = Button(
 			self.headerFrame,
 			text="Turn on all",
@@ -110,15 +119,13 @@ class SmartHomeSystem:
 		)
 		turnOffAllButt.grid(row=0, column=1, padx=5)
 
-		# display the time here
-		self.timeLabel.grid(row=0, column=2, padx=5, sticky=E)
-
+		# add, import, and export devices in the footer
 		addDeviceButt = Button(
 			self.footerFrame,
 			text="Add device",
 			command=self.addDevicePrompt
 		)
-		addDeviceButt.grid(row=0, column=0)
+		addDeviceButt.grid(row=0, column=0, padx=5)
 
 		importDevicesButt = Button(
 			self.footerFrame,
@@ -132,7 +139,7 @@ class SmartHomeSystem:
 			text="Export",
 			command=self.exportDevices
 		)
-		exportDevicesButt.grid(row=0, column=2)
+		exportDevicesButt.grid(row=0, column=2, padx=5)
 
 	def refreshDeviceList(self):
 		"""
@@ -148,15 +155,16 @@ class SmartHomeSystem:
 
 		for i in range(numDevices):
 			device = devices[i]
-			self.createDeviceWidget(self.deviceWidgets, self.devicesFrame, device, i)
+			self.createDeviceRow(self.deviceWidgets, self.devicesFrame, device, i)
 
 		if numDevices == 0:
 			noDevicesLabel = Label(self.devicesFrame, text="No devices")
 			noDevicesLabel.grid(row=0, column=0)
 			self.deviceWidgets.append(noDevicesLabel)
 
-	def createDeviceWidget(self, widgetList, parentFrame, device, i):
-		"""Creates a "widget" (row of items) for a device"""
+	def createDeviceRow(self, widgetList, parentFrame, device, i):
+		"""Creates a row of widgets for a device, and draws it to the given frame"""
+
 		if not isinstance(parentFrame, Frame):
 			raise ValueError("Widget must be a Frame")
 		
@@ -172,7 +180,7 @@ class SmartHomeSystem:
 
 		deviceTypeImage = Label(parentFrame, image=deviceImage, text=deviceType)
 		deviceTypeImage.grid(row=i, column=0, sticky=W, pady=5, padx=2.5)
-		widgetList.append(deviceTypeImage)
+		widgetList.append(deviceTypeImage) # add it to a list so we can destroy it later on refresh
 
 		deviceTypeLabel = Label(parentFrame, text=deviceType)
 		deviceTypeLabel.grid(row=i, column=1, sticky=W, pady=5, padx=2.5)
@@ -261,7 +269,7 @@ class SmartHomeSystem:
 		self.refreshDeviceList()
 
 	def removeDeviceAt(self, index):
-		"""Removes the device at the given index"""
+		"""Removes the device at the given index, after confirmation"""
 		deviceType = "plug" if isinstance(self.home.getDeviceAt(index), SmartPlug) else "doorbell"
 
 		# create an "are you sure" messagebox
@@ -275,7 +283,7 @@ class SmartHomeSystem:
 	def addPlug(self, addWin, consumption):
 		"""Adds a plug to the home"""
 		if consumption < 0 or consumption > 150:
-			MessageBox.showwarning(title="Check your values!", text="Consumption rate must be between 0 and 150")
+			MessageBox.showwarning(title="Check your values!", message="Consumption rate must be between 0 and 150")
 			return
 
 		self.home.addDevice(SmartPlug(consumption))
@@ -285,7 +293,7 @@ class SmartHomeSystem:
 	def editPlug(self, editWin, index, consumption):
 		"""Edits a plug at the given index"""
 		if consumption < 0 or consumption > 150:
-			MessageBox.showwarning(title="Check your values!", text="Consumption rate must be between 0 and 150")
+			MessageBox.showwarning(title="Check your values!", message="Consumption rate must be between 0 and 150")
 			return
 
 		self.home.getDeviceAt(index).setConsumptionRate(consumption)
@@ -388,7 +396,8 @@ class SmartHomeSystem:
 		editWin.mainloop()
 
 	def scheduleDevicePrompt(self, index):
-		"""Schedules a device at the given index"""
+		"""Shows a window that allows a user to view and edit the schedule for a device"""
+
 		device = self.home.getDeviceAt(index)
 		deviceType = "plug" if isinstance(device, SmartPlug) else "doorbell"
 		deviceSchedule = device.getSchedule()
@@ -398,22 +407,23 @@ class SmartHomeSystem:
 		scheduleWin.resizable(False, False)
 
 		timesFrame = Frame(scheduleWin)
-		timesFrame.grid(row=0, column=1, padx=10, pady=10)
+		timesFrame.grid(row=0, column=0, padx=10, pady=10)
 
 		for i in range(24): # 0 to 23
 			timeLabel = Label(timesFrame, text=f"{str(i).zfill(2)}:00")
 			timeLabel.grid(row=i, column=0, padx=2, pady=2)
 
-			options = ["Turn Off", "Turn On", "No Change"] # 0, 1, 2
-
+			options = ["❎ Turn Off", "✅ Turn On", "🟰 No Change"] # 0, 1, 2
 			actionCombo = Combobox(
 				timesFrame,
 				values=options,
-				width=10,
-				state="readonly"
+				width=15,
+				state="readonly" # user can't type in their own value
 			)
+			# set the current value to the device's schedule
 			actionCombo.current(deviceSchedule[i])
 
+			# when the user changes the value, update the device's schedule
 			actionCombo.bind(
 				"<<ComboboxSelected>>",
 				lambda event, i=i, actionCombo=actionCombo: self.updateDeviceSchedule(index, i, actionCombo.current())
@@ -421,7 +431,6 @@ class SmartHomeSystem:
 
 			actionCombo.grid(row=i, column=1, padx=10, pady=10)
 	
-
 		scheduleWin.mainloop()
 
 
@@ -438,7 +447,6 @@ class SmartHomeSystem:
 	def updateDeviceSchedule(self, index, hour, action):
 		"""Updates the schedule for a device at the given index"""
 		self.home.getDeviceAt(index).setActionAtHour(hour, action)
-		print(self.home.getDeviceAt(index).getSchedule())
 	
 
 	def exportDevices(self):
