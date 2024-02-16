@@ -1,13 +1,13 @@
 class SmartDevice:
 	"""
-		Smart device is the super class for all smart devices
+		Super class for all smart devices
 	"""
 	def __init__(self):
 		self.switchedOn = False
 		self.schedule = []
 
-		for i in range(24): # 0 - 23
-			self.schedule.append(2)
+		for _ in range(24): # 0 - 23
+			self.schedule.append(None)
 
 	def toggleSwitch(self):
 		self.switchedOn = not self.switchedOn
@@ -27,7 +27,11 @@ class SmartDevice:
 	def setActionAtHour(self, hour, action):
 		if hour < 0 or hour > 23:
 			raise ValueError("Hour must be between 0 and 23")
-		self.schedule[hour] = action
+		
+		if action == None or action == True or action == False:
+			self.schedule[hour] = action
+		else:
+			raise ValueError("Action must be None (no change), True (on), or False (off)")
 
 class SmartPlug(SmartDevice):
 	def __init__(self, consumptionRate=0):
@@ -123,6 +127,8 @@ class SmartHome():
 		return out
 	
 	def importCSV(self, csv):
+		self.devices = []
+
 		# remove first line
 		csv = csv.split("\n")[1:]
 		for line in csv:
@@ -151,11 +157,10 @@ class SmartHome():
 			
 			schedule = schedule.split(";")
 			for i in range(24):
-				newDevice.setActionAtHour(i, int(schedule[i]))
+				newDevice.setActionAtHour(i, eval(schedule[i])) # eval is used to convert string to boolean
 
 			self.addDevice(newDevice)
 			
-
 	def __str__(self):
 		out = "SmartHome"
 

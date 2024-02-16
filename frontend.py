@@ -1,7 +1,7 @@
 from backend import *
 from tkinter import *
 from tkinter import messagebox, filedialog, font
-from tkinter.ttk import Combobox
+from tkinter.ttk import Combobox, Separator
 
 IMAGESPATH = "images/"
 
@@ -55,6 +55,7 @@ class SmartHomeSystem:
 
 		self.win = Tk()
 		self.win.title("Smart Home System")
+		self.win.minsize(565, 0) # stops the window getting smaller when widgets are destroyed or changed
 		self.win.resizable(False, False)
 
 		# make section frames where our widgets will go
@@ -79,7 +80,7 @@ class SmartHomeSystem:
 		self.monoFont = font.nametofont("TkFixedFont")
 		self.monoFont.configure(
 			family="Lucida Console",
-			size=10
+			size=11
 		)
 
 		# here are all of our images for the devices, to be used in the GUI
@@ -94,72 +95,81 @@ class SmartHomeSystem:
 		self.IMAGEADD = PhotoImage(file=f"{IMAGESPATH}add.png")
 		self.IMAGECLOCK = PhotoImage(file=f"{IMAGESPATH}clock.png")
 
-		# also set up the time and its label here
-		self.timeIcon = Label(self.headerFrame, image=self.IMAGECLOCK)
-		self.timeIcon.grid(row=0, column=4, padx=5)
-
+		# also set up the time here
 		self.time = 0
-		self.timeLabel = Label(
-			self.headerFrame,
-			text=self.getTimeString(),
-			font=self.monoFont
-		)
-		self.timeLabel.grid(row=0, column=5, padx=5, sticky=E)
+		self.timeString = StringVar(value=self.getTimeString())
 
 	def createStaticButtons(self):
 		"""Creates the buttons that will always be present in the GUI"""
 
 		# turn on/off all devices in the header
 		turnOnAllIcon = Label(self.headerFrame, image=self.IMAGEPLUGON)
-		turnOnAllIcon.grid(row=0, column=0, padx=5)
+		turnOnAllIcon.grid(row=0, column=0)
 
 		turnOnAllButt = Button(
 			self.headerFrame,
 			text="Turn on all",
 			command=self.turnOnAll
 		)
-		turnOnAllButt.grid(row=0, column=1, padx=5)
+		turnOnAllButt.grid(row=0, column=1)
 
 		turnOffAllIcon = Label(self.headerFrame, image=self.IMAGEPLUGOFF)
-		turnOffAllIcon.grid(row=0, column=2, padx=5)
+		turnOffAllIcon.grid(row=0, column=2)
 
 		turnOffAllButt = Button(
 			self.headerFrame,
 			text="Turn off all",
 			command=self.turnOffAll
 		)
-		turnOffAllButt.grid(row=0, column=3, padx=5)
+		turnOffAllButt.grid(row=0, column=3)
+
+		headerSeparator = Separator(self.headerFrame, orient=VERTICAL)
+		headerSeparator.grid(row=0, column=4, padx=20, sticky="ns")
+
+		# clock, also in the header
+		timeIcon = Label(self.headerFrame, image=self.IMAGECLOCK)
+		timeIcon.grid(row=0, column=5)
+
+		self.timeLabel = Label(
+			self.headerFrame,
+			textvariable=self.timeString,
+			font=self.monoFont
+		)
+		self.timeLabel.grid(row=0, column=6)
 
 		# add, import, and export devices in the footer
 		addIcon = Label(self.footerFrame, image=self.IMAGEADD)
-		addIcon.grid(row=0, column=0, padx=5)
+		addIcon.grid(row=0, column=0)
 
 		addButt = Button(
 			self.footerFrame,
 			text="Add device",
-			command=self.addDevicePrompt
+			command=self.addDeviceWindow
 		)
-		addButt.grid(row=0, column=1, padx=5)
+		addButt.grid(row=0, column=1)
+
+		footerSeparator = Separator(self.footerFrame, orient=VERTICAL)
+		footerSeparator.grid(row=0, column=2, padx=20, sticky="ns")
 
 		importIcon = Label(self.footerFrame, image=self.IMAGEIMPORT)
-		importIcon.grid(row=0, column=2, padx=5)
+		importIcon.grid(row=0, column=3)
 
 		importButt = Button(
 			self.footerFrame,
 			text="Import",
 			command=self.importDevices
 		)
-		importButt.grid(row=0, column=3)
+		importButt.grid(row=0, column=4)
 
 		exportIcon = Label(self.footerFrame, image=self.IMAGEEXPORT)
-		exportIcon.grid(row=0, column=4, padx=5)
+		exportIcon.grid(row=0, column=5)
 
 		exportButt = Button(
 			self.footerFrame,
 			text="Export",
 			command=self.exportDevices
 		)
-		exportButt.grid(row=0, column=5, padx=5)
+		exportButt.grid(row=0, column=6)
 
 	def refreshDeviceList(self):
 		"""
@@ -252,7 +262,7 @@ class SmartHomeSystem:
 			parentFrame,
 			text="Edit",
 			padx=5,
-			command=lambda: self.editDevicePrompt(i, statusTextVar, willBeVar)
+			command=lambda: self.editDeviceWindow(i, statusTextVar, willBeVar)
 		)
 		editButt.grid(row=i, column=6, pady=5, padx=2.5)
 		widgetList.append(editButt)
@@ -261,7 +271,7 @@ class SmartHomeSystem:
 			parentFrame,
 			text="Schedule",
 			padx=5,
-			command=lambda: self.scheduleDevicePrompt(i)
+			command=lambda: self.scheduleDeviceWindow(i)
 		)
 		scheduleButt.grid(row=i, column=7, pady=5, padx=2.5)
 		widgetList.append(scheduleButt)
@@ -322,7 +332,7 @@ class SmartHomeSystem:
 	############################################
 	# Add window and its related functions
 	############################################
-	def addDevicePrompt(self):
+	def addDeviceWindow(self):
 		"""Shows a window that allows a user to add a device to the home"""
 
 		addWin = Toplevel(self.win)
@@ -381,33 +391,37 @@ class SmartHomeSystem:
 	############################################
 	# Edit window and its related functions
 	############################################
-	def editDevicePrompt(self, index, statusTextVar, willBeVar):
+	def editDeviceWindow(self, index, statusTextVar, willBeVar):
 		"""Shows a prompt to edit the properties of a device at the given index"""
 
 		device = self.home.getDeviceAt(index)
 		deviceType = "plug" if isinstance(device, SmartPlug) else "doorbell"
 
 		editWin = Toplevel(self.win)
-		editWin.title(f"Edit {deviceType}")
+		editWin.title(f"{deviceType.title()} at index {index}")
 		editWin.resizable(False, False)
 
-		label = Label(editWin, text=f"Editing {deviceType} at index {index}")
-		label.pack(padx=10, pady=10)
+		label = Label(editWin, text=f"{deviceType.title()} at index {index}")
+		label.grid(row=0, column=0, padx=10, columnspan=2, pady=10)
 
 		currentStatusLabel = Label(editWin, textvariable=statusTextVar)
-		currentStatusLabel.pack(padx=10, pady=10)
+		currentStatusLabel.grid(row=1, column=0, columnspan=2, padx=10, pady=5)
 
 		toggleButt = Button(
 			editWin,
 			textvar=willBeVar,
 			command=lambda: self.toggleDeviceAt(index, statusTextVar, willBeVar)
 		)
-		toggleButt.pack(padx=10, pady=10)
+		toggleButt.grid(row=2, column=0, padx=10, columnspan=2, pady=5)
+
+
+		separatorLine = Separator(editWin, orient=HORIZONTAL)
+		separatorLine.grid(row=3, column=0, columnspan=2, padx=10, pady=10, sticky="ew")
 
 
 		if deviceType == "plug":
 			consumptionText = Label(editWin, text="Consumption rate:")
-			consumptionText.pack(padx=10, pady=10)
+			consumptionText.grid(row=4, column=0, padx=10)
 
 			consumption = IntVar(value=device.getConsumptionRate())
 			consumptionEntry = Spinbox(
@@ -417,30 +431,30 @@ class SmartHomeSystem:
 				textvariable=consumption,
 				wrap=True
 			)
-			consumptionEntry.pack(padx=10, pady=10)
+			consumptionEntry.grid(row=5, column=0, padx=10, pady=10)
 
 			editButt = Button(
 				editWin,
 				text="Save",
 				command=lambda: self.editPlugConsumptionRate(editWin, index, consumption.get())
 			)
-			editButt.pack(padx=10, pady=10)
+			editButt.grid(row=5, column=1, padx=10, pady=10)
 
 		elif deviceType == "doorbell":
 			sleepMode = BooleanVar(value=device.getSleep())
 			sleepCheck = Checkbutton(
 				editWin,
-				text="Sleep mode",
+				text="Enable sleep mode",
 				variable=sleepMode
 			)
-			sleepCheck.pack(padx=10, pady=10)
+			sleepCheck.grid(row=4, column=0, padx=10, pady=10)
 
 			editButt = Button(
 				editWin,
 				text="Save",
 				command=lambda: self.editDoorbellSleepMode(editWin, index, sleepMode.get())
 			)
-			editButt.pack(padx=10, pady=10)
+			editButt.grid(row=4, column=1, padx=10, pady=10)
 
 		editWin.mainloop()
 
@@ -470,7 +484,7 @@ class SmartHomeSystem:
 		self.refreshDeviceList()
 
 	############################################
-	# Schedule window and its related functions, and clock
+	# Schedule window and its related functions, and accompanying clock things
 	############################################
 	def getTimeString(self):
 		"""Returns the current time as a formatted string (HH:00)"""
@@ -481,6 +495,7 @@ class SmartHomeSystem:
 
 		newTime = self.time + 1 if self.time < 23 else 0
 		self.time = newTime
+		self.timeString.set(self.getTimeString())
 
 		devicesUpdated = False
 		devices = self.home.getDevices()
@@ -499,7 +514,7 @@ class SmartHomeSystem:
 
 		self.win.after(3000, self.incrementClock)
 
-	def scheduleDevicePrompt(self, index):
+	def scheduleDeviceWindow(self, index):
 		"""Shows a window that allows a user to view and edit the schedule for a device"""
 
 		device = self.home.getDeviceAt(index)
@@ -507,33 +522,39 @@ class SmartHomeSystem:
 		deviceSchedule = device.getSchedule()
 
 		scheduleWin = Toplevel(self.win)
-		scheduleWin.title(f"Schedule for {deviceType}")
+		scheduleWin.title(f"Schedule for {deviceType} at index {index}")
 		scheduleWin.resizable(False, False)
 
+		deviceLabel = Label(scheduleWin, text=f"Schedule for {deviceType} at index {index}")
+		deviceLabel.grid(row=0, column=0, padx=10, pady=10)
+
 		timesFrame = Frame(scheduleWin)
-		timesFrame.grid(row=0, column=0, padx=10, pady=10)
+		timesFrame.grid(row=1, column=0, padx=10, pady=10)
 
-		for i in range(24): # 0 to 23
-			timeLabel = Label(timesFrame, text=f"{str(i).zfill(2)}:00")
-			timeLabel.grid(row=i, column=0, padx=2, pady=2)
+		for hr in range(24): # 0 to 23
+			timeLabel = Label(timesFrame, text=f"{str(hr).zfill(2)}:00")
+			timeLabel.grid(row=hr, column=0, padx=2, pady=2)
 
-			options = ["Turn Off", "Turn On", "No Change"] # 0, 1, 2
+			optionsText = ["Turn Off", "Turn On", "No Change"]
+			optionsValues = [False, True, None]
+
 			actionCombo = Combobox(
 				timesFrame,
-				values=options,
+				values=optionsText,
 				width=15,
 				state="readonly" # user can't type in their own value
 			)
 			# set the current value to the device's schedule
-			actionCombo.current(deviceSchedule[i])
+			actionCombo.current(optionsValues.index(deviceSchedule[hr]))
 
 			# when the user changes the value, update the device's schedule
 			actionCombo.bind(
 				"<<ComboboxSelected>>",
-				lambda event, i=i, actionCombo=actionCombo: self.updateDeviceSchedule(index, i, actionCombo.current())
+				lambda event, i=hr, actionCombo=actionCombo:
+					self.updateDeviceSchedule(index, i, optionsValues[optionsText.index(actionCombo.get())])
 			)
 
-			actionCombo.grid(row=i, column=1, padx=10, pady=10)
+			actionCombo.grid(row=hr, column=1, padx=10, pady=10)
 	
 		scheduleWin.mainloop()
 
@@ -562,6 +583,14 @@ class SmartHomeSystem:
 
 	def importDevices(self):
 		"""Prompts the user to import devices from a file"""
+		# warn that this will overwrite the current devices
+		sure = messagebox.askyesno(
+			title="Importing devices",
+			message="Importing  will overwrite the current devices. Are you sure?"
+		)
+		if not sure:
+			return
+
 		file = filedialog.askopenfile(
 			mode="r",
 			filetypes=[("CSV files", "*.csv")]
@@ -577,6 +606,9 @@ class SmartHomeSystem:
 		self.home.importCSV(content)
 		self.refreshDeviceList()
 
+	############################################
+	# Run the GUI
+	############################################
 	def run(self):
 		"""Runs the GUI and sets up everything"""
 		self.createStaticButtons()
