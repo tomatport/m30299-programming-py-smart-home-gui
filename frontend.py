@@ -209,8 +209,9 @@ class SmartHomeSystem:
 		deviceTypeLabel.grid(row=i, column=1, sticky=W, pady=5, padx=2.5)
 		widgetList.append(deviceTypeLabel)
 
-		statusText = "ON" if device.getSwitchedOn() else "OFF"	
-		statusLabel = Label(parentFrame, text=statusText)
+		statusText = "ON" if device.getSwitchedOn() else "OFF"
+		statusTextVar = StringVar(value=statusText)
+		statusLabel = Label(parentFrame, textvariable=statusTextVar)
 		statusLabel.grid(row=i, column=2, sticky=W, pady=5, padx=2.5)
 		widgetList.append(statusLabel)
 
@@ -235,11 +236,12 @@ class SmartHomeSystem:
 
 		
 		willBe = "off" if device.getSwitchedOn() else "on"
+		willBeVar = StringVar(value=f"Turn {willBe}")
 		toggleButt = Button(
 			parentFrame,
-			text=f"Turn {willBe}",
+			textvariable=willBeVar,
 			padx=5,
-			command=lambda: self.toggleDeviceAt(i)
+			command=lambda: self.toggleDeviceAt(i, statusTextVar, willBeVar)
 		)
 		
 		toggleButt.grid(row=i, column=4, pady=5, padx=2.5)
@@ -249,7 +251,7 @@ class SmartHomeSystem:
 			parentFrame,
 			text="Edit",
 			padx=5,
-			command=lambda: self.editDevicePrompt(i)
+			command=lambda: self.editDevicePrompt(i, statusTextVar, willBeVar)
 		)
 		editButt.grid(row=i, column=5, pady=5, padx=2.5)
 		widgetList.append(editButt)
@@ -273,22 +275,32 @@ class SmartHomeSystem:
 		removeButt.grid(row=i, column=7, pady=5, padx=2.5)
 		widgetList.append(removeButt)
 
-	def turnOnDeviceAt(self, index):
-		"""Turns on the device at the given index"""
-		device = self.home.getDeviceAt(index)
-		device.switchedOn = True
-		self.refreshDeviceList()
-
-	def turnOffDeviceAt(self, index):
-		"""Turns off the device at the given index"""
-		device = self.home.getDeviceAt(index)
-		device.switchedOn = False
-		self.refreshDeviceList()
-
-	def toggleDeviceAt(self, index):
+	############################################
+	# Device manipulation functions
+	############################################
+	def toggleDeviceAt(self, index, statusTextVar, willBeVar):
 		"""Toggles the device at the given index"""
-		device = self.home.getDeviceAt(index)
+		device = self.home.getDeviceAt(index)	
+
 		device.toggleSwitch()
+
+		if device.getSwitchedOn():
+			statusTextVar.set("ON")
+			willBeVar.set("Turn off")
+		else:
+			statusTextVar.set("OFF")
+			willBeVar.set("Turn on")
+
+		# no need to refresh since the Tkinter variables are updated in-place
+	
+	def turnOnAll(self):
+		"""Turns on all devices"""
+		self.home.turnOnAll()
+		self.refreshDeviceList()
+
+	def turnOffAll(self):
+		"""Turns off all devices"""
+		self.home.turnOffAll()
 		self.refreshDeviceList()
 
 	def removeDeviceAt(self, index):
@@ -302,41 +314,13 @@ class SmartHomeSystem:
 		
 		self.home.removeDevice(index)
 		self.refreshDeviceList()
-	
-	def addPlug(self, addWin, consumption):
-		"""Adds a plug to the home"""
-		if consumption < 0 or consumption > 150:
-			MessageBox.showwarning(title="Check your values!", message="Consumption rate must be between 0 and 150")
-			return
 
-		self.home.addDevice(SmartPlug(consumption))
-		addWin.destroy()
-		self.refreshDeviceList()
-
-	def editPlug(self, editWin, index, consumption):
-		"""Edits a plug at the given index"""
-		if consumption < 0 or consumption > 150:
-			MessageBox.showwarning(title="Check your values!", message="Consumption rate must be between 0 and 150")
-			return
-
-		self.home.getDeviceAt(index).setConsumptionRate(consumption)
-		editWin.destroy()
-		self.refreshDeviceList()
-
-	def editDoorbell(self, editWin, index, sleepMode):
-		"""Edits a doorbell at the given index"""
-		self.home.getDeviceAt(index).setSleep(sleepMode)
-		editWin.destroy()
-		self.refreshDeviceList()
-
-	def addDoorbell(self, addWin):
-		"""Adds a doorbell to the home"""
-		self.home.addDevice(SmartDoorbell())
-		addWin.destroy()
-		self.refreshDeviceList()
-
+	############################################
+	# Add window and its related functions
+	############################################
 	def addDevicePrompt(self):
-		"""Adds a device to the home, based on user selection"""
+		"""Shows a window that allows a user to add a device to the home"""
+
 		addWin = Toplevel(self.win)
 		addWin.title("Add a device")
 		addWin.resizable(False, False)
@@ -370,14 +354,50 @@ class SmartHomeSystem:
 
 		addWin.mainloop()
 
-	def editDevicePrompt(self, index):
-		"""Edits a device at the given index"""
+	def addPlug(self, addWin, consumption):
+		"""From the add window, adds a plug to the home, then destroys the window and refreshes the device list"""
+
+		if consumption < 0 or consumption > 150:
+			MessageBox.showwarning(title="Check your values!",
+			                       message="Consumption rate must be between 0 and 150")
+			return
+
+		self.home.addDevice(SmartPlug(consumption))
+		addWin.destroy()
+		self.refreshDeviceList()
+
+	def addDoorbell(self, addWin):
+		"""From the add window, adds a doorbell to the home, then destroys the window and refreshes the device list"""
+		self.home.addDevice(SmartDoorbell())
+		addWin.destroy()
+		self.refreshDeviceList()
+
+	############################################
+	# Edit window and its related functions
+	############################################
+	def editDevicePrompt(self, index, statusTextVar, willBeVar):
+		"""Shows a prompt to edit the properties of a device at the given index"""
+
 		device = self.home.getDeviceAt(index)
 		deviceType = "plug" if isinstance(device, SmartPlug) else "doorbell"
 
 		editWin = Toplevel(self.win)
 		editWin.title(f"Edit {deviceType}")
 		editWin.resizable(False, False)
+
+		label = Label(editWin, text=f"Editing {deviceType} at index {index}")
+		label.pack(padx=10, pady=10)
+
+		currentStatusLabel = Label(editWin, textvariable=statusTextVar)
+		currentStatusLabel.pack(padx=10, pady=10)
+
+		toggleButt = Button(
+			editWin,
+			textvar=willBeVar,
+			command=lambda: self.toggleDeviceAt(index, statusTextVar, willBeVar)
+		)
+		toggleButt.pack(padx=10, pady=10)
+
 
 		if deviceType == "plug":
 			consumptionText = Label(editWin, text="Consumption rate:")
@@ -395,8 +415,8 @@ class SmartHomeSystem:
 
 			editButt = Button(
 				editWin,
-				text="Edit",
-				command=lambda: self.editPlug(editWin, index, consumption.get())
+				text="Save",
+				command=lambda: self.editPlugConsumptionRate(editWin, index, consumption.get())
 			)
 			editButt.pack(padx=10, pady=10)
 
@@ -411,12 +431,65 @@ class SmartHomeSystem:
 
 			editButt = Button(
 				editWin,
-				text="Edit",
-				command=lambda: self.editDoorbell(editWin, index, sleepMode.get())
+				text="Save",
+				command=lambda: self.editDoorbellSleepMode(editWin, index, sleepMode.get())
 			)
 			editButt.pack(padx=10, pady=10)
 
 		editWin.mainloop()
+
+	def editPlugConsumptionRate(self, editWin, index, consumption):
+		"""
+		From the edit window, sets the consumption rate of a plug at the given index,
+		then destroys the window and refreshes the device list
+		"""
+		if consumption < 0 or consumption > 150:
+			MessageBox.showwarning(title="Check your values!",
+			                       message="Consumption rate must be between 0 and 150")
+			return
+
+		self.home.getDeviceAt(index).setConsumptionRate(consumption)
+		editWin.destroy()
+		self.refreshDeviceList()
+
+	def editDoorbellSleepMode(self, editWin, index, sleepMode):
+		"""
+		From the edit window, sets the sleep mode of a doorbell at the given index,
+		then destroys the window and refreshes the device list
+		"""
+		self.home.getDeviceAt(index).setSleep(sleepMode)
+		editWin.destroy()
+		self.refreshDeviceList()
+
+	############################################
+	# Schedule window and its related functions, and clock
+	############################################
+	def getTimeString(self):
+		"""Returns the current time as a formatted string (HH:00)"""
+		return f"{str(self.time).zfill(2)}:00"
+	
+	def incrementClock(self):
+		"""Increment the clock every 3 seconds, and update the devices accordingly"""
+
+		newTime = self.time + 1 if self.time < 23 else 0
+		self.time = newTime
+
+		devicesUpdated = False
+		devices = self.home.getDevices()
+		for device in devices:
+			if device.getSchedule()[newTime] == 0:
+				devicesUpdated = True
+				device.switchedOn = False
+			elif device.getSchedule()[newTime] == 1:
+				devicesUpdated = True
+				device.switchedOn = True
+
+		if devicesUpdated:
+			self.refreshDeviceList()
+
+		self.timeLabel.config(text=self.getTimeString())
+
+		self.win.after(3000, self.incrementClock)
 
 	def scheduleDevicePrompt(self, index):
 		"""Shows a window that allows a user to view and edit the schedule for a device"""
@@ -436,7 +509,7 @@ class SmartHomeSystem:
 			timeLabel = Label(timesFrame, text=f"{str(i).zfill(2)}:00")
 			timeLabel.grid(row=i, column=0, padx=2, pady=2)
 
-			options = ["❎ Turn Off", "✅ Turn On", "🟰 No Change"] # 0, 1, 2
+			options = ["Turn Off", "Turn On", "No Change"] # 0, 1, 2
 			actionCombo = Combobox(
 				timesFrame,
 				values=options,
@@ -456,77 +529,51 @@ class SmartHomeSystem:
 	
 		scheduleWin.mainloop()
 
-
-	def turnOnAll(self):
-		"""Turns on all devices"""
-		self.home.turnOnAll()
-		self.refreshDeviceList()
-
-	def turnOffAll(self):
-		"""Turns off all devices"""
-		self.home.turnOffAll()
-		self.refreshDeviceList()
-
 	def updateDeviceSchedule(self, index, hour, action):
 		"""Updates the schedule for a device at the given index"""
 		self.home.getDeviceAt(index).setActionAtHour(hour, action)
 	
-
+	############################################
+	# Import and Export functions
+	############################################
 	def exportDevices(self):
-		"""Exports the devices to a file"""
+		"""Lets the user export the devices to a CSV file after choosing a location"""
 		content = self.home.getCSV()
 		file = FileDialog.asksaveasfile(
 			mode="w",
 			defaultextension=".csv",
 			filetypes=[("CSV files", "*.csv")]
 		)
-		if file is None:
+		
+		try:
+			file.write(content)
+			file.close()
+		except Exception as e:
+			MessageBox.showerror(title="Error Writing File", message=f"{e}")
 			return
-		file.write(content)
-		file.close()
 
 	def importDevices(self):
-		"""Imports devices from a file"""
+		"""Prompts the user to import devices from a file"""
 		file = FileDialog.askopenfile(
 			mode="r",
 			filetypes=[("CSV files", "*.csv")]
 		)
-		if file is None:
+		
+		try:
+			content = file.read()
+			file.close()
+		except Exception as e:
+			MessageBox.showerror(title="Error Reading File", message=f"{e}")
 			return
-		content = file.read()
-		file.close()
+		
 		self.home.importCSV(content)
 		self.refreshDeviceList()
 
-	def tickTimer(self):
-		# update devices based on schedule
-		newTime = self.time + 1 if self.time < 23 else 0
-		self.time = newTime
-
-		devicesUpdated = False
-		devices = self.home.getDevices()
-		for device in devices:
-			if device.getSchedule()[newTime] == 0:
-				devicesUpdated = True
-				device.switchedOn = False
-			elif device.getSchedule()[newTime] == 1:
-				devicesUpdated = True
-				device.switchedOn = True
-
-		if devicesUpdated:
-			self.refreshDeviceList()
-
-		self.timeLabel.config(text=self.getTimeString())
-	
-		self.win.after(3000, self.tickTimer)
-
-	def getTimeString(self):
-		return f"{str(self.time).zfill(2)}:00"
-
 	def run(self):
+		"""Runs the GUI and sets up everything"""
 		self.createStaticButtons()
 		self.refreshDeviceList()
-		self.tickTimer()
+		self.incrementClock()
 		self.win.mainloop()
 
 def main():
