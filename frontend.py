@@ -326,7 +326,7 @@ class SmartHomeSystem:
 		if not sure:
 			return
 		
-		self.home.removeDevice(index)
+		self.home.removeDeviceAt(index)
 		self.refreshDeviceList()
 
 	############################################

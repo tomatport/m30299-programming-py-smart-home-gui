@@ -100,7 +100,7 @@ class SmartHome():
 
 		self.devices.append(device)
 
-	def removeDevice(self, index):
+	def removeDeviceAt(self, index):
 		if index < 0 or index >= len(self.devices):
 			raise ValueError("Index out of range")
 
@@ -229,6 +229,9 @@ def testSmartHome():
 	print(home)
 	# Turn on all devices in the smart home and print the smart home object again.
 	home.turnOnAll()
+	print(home)
+	# Remove the first device and print the smart home.
+	home.removeDeviceAt(0)
 	print(home)
 
 
