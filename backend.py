@@ -235,6 +235,6 @@ def testSmartHome():
 	print(home)
 
 
-# testSmartPlug()
-# testSmartDoorbell()
-# testSmartHome()
+testSmartPlug()
+testSmartDoorbell()
+testSmartHome()
