@@ -55,7 +55,7 @@ class SmartHomeSystem:
 
 		self.win = Tk()
 		self.win.title("Smart Home System")
-		self.win.minsize(565, 0) # stops the window getting smaller when widgets are destroyed or changed
+		self.win.minsize(400, 0) # stops the window getting smaller when widgets are destroyed or changed
 		self.win.resizable(False, False)
 
 		# make section frames where our widgets will go
@@ -94,6 +94,10 @@ class SmartHomeSystem:
 		self.IMAGEEXPORT = PhotoImage(file=f"{IMAGESPATH}export.png")
 		self.IMAGEADD = PhotoImage(file=f"{IMAGESPATH}add.png")
 		self.IMAGECLOCK = PhotoImage(file=f"{IMAGESPATH}clock.png")
+		self.IMAGEEDIT = PhotoImage(file=f"{IMAGESPATH}edit.png")
+		self.IMAGEDELETE = PhotoImage(file=f"{IMAGESPATH}delete.png")
+		self.TOGGLEON = PhotoImage(file=f"{IMAGESPATH}toggleon.png")
+		self.TOGGLEOFF = PhotoImage(file=f"{IMAGESPATH}toggleoff.png")
 
 		# also set up the time here
 		self.time = 0
@@ -103,73 +107,80 @@ class SmartHomeSystem:
 		"""Creates the buttons that will always be present in the GUI"""
 
 		# turn on/off all devices in the header
-		turnOnAllIcon = Label(self.headerFrame, image=self.IMAGEPLUGON)
-		turnOnAllIcon.grid(row=0, column=0)
-
 		turnOnAllButt = Button(
 			self.headerFrame,
 			text="Turn on all",
-			command=self.turnOnAll
+			image=self.IMAGEPLUGON,
+			compound=LEFT,
+			command=self.turnOnAll,
+			padx=5,
+			pady=5
 		)
-		turnOnAllButt.grid(row=0, column=1)
+		turnOnAllButt.grid(row=0, column=0, padx=10)
 
-		turnOffAllIcon = Label(self.headerFrame, image=self.IMAGEPLUGOFF)
-		turnOffAllIcon.grid(row=0, column=2)
 
 		turnOffAllButt = Button(
 			self.headerFrame,
 			text="Turn off all",
-			command=self.turnOffAll
+			image=self.IMAGEPLUGOFF,
+			compound=LEFT,
+			command=self.turnOffAll,
+			padx=5,
+			pady=5
 		)
-		turnOffAllButt.grid(row=0, column=3)
+		turnOffAllButt.grid(row=0, column=1, padx=10)
 
 		headerSeparator = Separator(self.headerFrame, orient=VERTICAL)
-		headerSeparator.grid(row=0, column=4, padx=20, sticky="ns")
+		headerSeparator.grid(row=0, column=2, padx=20, sticky="ns")
 
 		# clock, also in the header
-		timeIcon = Label(self.headerFrame, image=self.IMAGECLOCK)
-		timeIcon.grid(row=0, column=5)
-
 		self.timeLabel = Label(
 			self.headerFrame,
 			textvariable=self.timeString,
-			font=self.monoFont
+			image=self.IMAGECLOCK,
+			compound=LEFT,
+			font=self.monoFont,
+			padx=5,
+			pady=5
 		)
-		self.timeLabel.grid(row=0, column=6)
+		self.timeLabel.grid(row=0, column=3, padx=10)
 
 		# add, import, and export devices in the footer
-		addIcon = Label(self.footerFrame, image=self.IMAGEADD)
-		addIcon.grid(row=0, column=0)
-
 		addButt = Button(
 			self.footerFrame,
 			text="Add device",
-			command=self.addDeviceWindow
+			image=self.IMAGEADD,
+			compound=LEFT,
+			command=self.addDeviceWindow,
+			padx=5,
+			pady=5
 		)
-		addButt.grid(row=0, column=1)
+		addButt.grid(row=0, column=0, padx=10)
 
 		footerSeparator = Separator(self.footerFrame, orient=VERTICAL)
-		footerSeparator.grid(row=0, column=2, padx=20, sticky="ns")
-
-		importIcon = Label(self.footerFrame, image=self.IMAGEIMPORT)
-		importIcon.grid(row=0, column=3)
+		footerSeparator.grid(row=0, column=1, padx=20, sticky="ns")
 
 		importButt = Button(
 			self.footerFrame,
 			text="Import",
-			command=self.importDevices
+			image=self.IMAGEIMPORT,
+			compound=LEFT,
+			command=self.importDevices,
+			padx=5,
+			pady=5
 		)
-		importButt.grid(row=0, column=4)
-
-		exportIcon = Label(self.footerFrame, image=self.IMAGEEXPORT)
-		exportIcon.grid(row=0, column=5)
+		importButt.grid(row=0, column=2, padx=10)
 
 		exportButt = Button(
 			self.footerFrame,
 			text="Export",
-			command=self.exportDevices
+			image=self.IMAGEEXPORT,
+			compound=LEFT,
+			command=self.exportDevices,
+			padx=5,
+			pady=5
 		)
-		exportButt.grid(row=0, column=6)
+		exportButt.grid(row=0, column=3, padx=10)
 
 	def refreshDeviceList(self):
 		"""
@@ -208,28 +219,24 @@ class SmartHomeSystem:
 		widgetList.append(indexLabel)
 
 		if deviceType == "Plug":
-			deviceImage = self.IMAGEPLUGON if device.getSwitchedOn() else self.IMAGEPLUGOFF
+			deviceImage = self.IMAGEPLUGON
 		elif deviceType == "Doorbell":
-			deviceImage = self.IMAGEDOORBELLON if device.getSwitchedOn() else self.IMAGEDOORBELLOFF
+			deviceImage = self.IMAGEDOORBELLON
 
-		deviceTypeImage = Label(parentFrame, image=deviceImage, text=deviceType)
-		deviceTypeImage.grid(row=i, column=1, sticky=W, pady=5, padx=2.5)
-		widgetList.append(deviceTypeImage) # add it to a list so we can destroy it later on refresh
-
-		deviceTypeLabel = Label(parentFrame, text=deviceType)
-		deviceTypeLabel.grid(row=i, column=2, sticky=W, pady=5, padx=2.5)
-		widgetList.append(deviceTypeLabel)
+		deviceTypeLabel = Label(parentFrame, text=deviceType, image=deviceImage, compound=LEFT)
+		deviceTypeLabel.grid(row=i, column=1, sticky=W, pady=5, padx=2.5)
+		widgetList.append(deviceTypeLabel) # add it to a list so we can destroy it later on refresh
 
 		statusText = "ON" if device.getSwitchedOn() else "OFF"
 		statusTextVar = StringVar(value=statusText)
 		statusLabel = Label(parentFrame, textvariable=statusTextVar)
-		statusLabel.grid(row=i, column=3, sticky=W, pady=5, padx=2.5)
+		statusLabel.grid(row=i, column=2, sticky=W, pady=5, padx=2.5)
 		widgetList.append(statusLabel)
 
 		if deviceType == "Plug":
 			consumptionText = f"{device.getConsumptionRate()}W"
 			consumptionLabel = Label(parentFrame, text=consumptionText, font=self.monoFont)
-			consumptionLabel.grid(row=i, column=4, pady=5, padx=2.5)
+			consumptionLabel.grid(row=i, column=3, pady=5, padx=2.5)
 			widgetList.append(consumptionLabel)
 		elif deviceType == "Doorbell":
 			if device.getSleep():
@@ -242,65 +249,63 @@ class SmartHomeSystem:
 				sleepText = "Not Sleeping"
 
 			sleepLabel = Label(parentFrame, image=sleepImage, text=sleepText, justify=LEFT)
-			sleepLabel.grid(row=i, column=4, sticky=W, pady=5, padx=2.5)
+			sleepLabel.grid(row=i, column=3, sticky=W, pady=5, padx=2.5)
 			widgetList.append(sleepLabel)
 
 		
-		willBe = "off" if device.getSwitchedOn() else "on"
-		willBeVar = StringVar(value=f"Turn {willBe}")
+		statusImage = self.TOGGLEON if device.getSwitchedOn() else self.TOGGLEOFF
 		toggleButt = Button(
 			parentFrame,
-			textvariable=willBeVar,
+			text="Toggle",
+			image=statusImage,
 			padx=5,
-			command=lambda: self.toggleDeviceAt(i, statusTextVar, willBeVar)
+			command=lambda: self.toggleDeviceAt(i)
 		)
 		
-		toggleButt.grid(row=i, column=5, pady=5, padx=2.5)
+		toggleButt.grid(row=i, column=4, pady=5, padx=2.5)
 		widgetList.append(toggleButt)
 
 		editButt = Button(
 			parentFrame,
 			text="Edit",
+			image=self.IMAGEEDIT,
 			padx=5,
-			command=lambda: self.editDeviceWindow(i, statusTextVar, willBeVar)
+			command=lambda: self.editDeviceWindow(i)
 		)
-		editButt.grid(row=i, column=6, pady=5, padx=2.5)
+		editButt.grid(row=i, column=5, pady=5, padx=2.5)
 		widgetList.append(editButt)
 
 		scheduleButt = Button(
 			parentFrame,
 			text="Schedule",
+			image=self.IMAGECLOCK,
 			padx=5,
 			command=lambda: self.scheduleDeviceWindow(i)
 		)
-		scheduleButt.grid(row=i, column=7, pady=5, padx=2.5)
+		scheduleButt.grid(row=i, column=6, pady=5, padx=2.5)
 		widgetList.append(scheduleButt)
 
 		removeButt = Button(
 			parentFrame,
 			text="Remove",
+			image=self.IMAGEDELETE,
 			padx=5,
 			fg="red",
 			command=lambda: self.removeDeviceAt(i)
 		)
-		removeButt.grid(row=i, column=8, pady=5, padx=2.5)
+		removeButt.grid(row=i, column=7, pady=5, padx=2.5)
 		widgetList.append(removeButt)
 
 	############################################
 	# Device manipulation functions
 	############################################
-	def toggleDeviceAt(self, index, statusTextVar, willBeVar):
+	def toggleDeviceAt(self, index, statusVar=None):
 		"""Toggles the device at the given index"""
-		device = self.home.getDeviceAt(index)	
-
+		device = self.home.getDeviceAt(index)
 		device.toggleSwitch()
 
-		if device.getSwitchedOn():
-			statusTextVar.set("ON")
-			willBeVar.set("Turn off")
-		else:
-			statusTextVar.set("OFF")
-			willBeVar.set("Turn on")
+		if statusVar:
+			statusVar.set("ON" if device.getSwitchedOn() else "OFF")
 
 		self.refreshDeviceList()
 	
@@ -391,7 +396,7 @@ class SmartHomeSystem:
 	############################################
 	# Edit window and its related functions
 	############################################
-	def editDeviceWindow(self, index, statusTextVar, willBeVar):
+	def editDeviceWindow(self, index):
 		"""Shows a prompt to edit the properties of a device at the given index"""
 
 		device = self.home.getDeviceAt(index)
@@ -404,16 +409,17 @@ class SmartHomeSystem:
 		label = Label(editWin, text=f"{deviceType.title()} at index {index}")
 		label.grid(row=0, column=0, padx=10, columnspan=2, pady=10)
 
-		currentStatusLabel = Label(editWin, textvariable=statusTextVar)
+		currentStatus = "ON" if device.getSwitchedOn() else "OFF"
+		currentStatusVar = StringVar(value=currentStatus)
+		currentStatusLabel = Label(editWin, textvariable=currentStatusVar)
 		currentStatusLabel.grid(row=1, column=0, columnspan=2, padx=10, pady=5)
 
 		toggleButt = Button(
 			editWin,
-			textvar=willBeVar,
-			command=lambda: self.toggleDeviceAt(index, statusTextVar, willBeVar)
+			text="Toggle On/Off",
+			command=lambda: self.toggleDeviceAt(index, currentStatusVar)
 		)
 		toggleButt.grid(row=2, column=0, padx=10, columnspan=2, pady=5)
-
 
 		separatorLine = Separator(editWin, orient=HORIZONTAL)
 		separatorLine.grid(row=3, column=0, columnspan=2, padx=10, pady=10, sticky="ew")
