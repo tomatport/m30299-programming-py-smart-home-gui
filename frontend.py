@@ -182,7 +182,7 @@ class SmartHomeSystem:
 			parentFrame,
 			text="Toggle",
 			padx=5,
-			command=lambda: self.toggleDeviceAt(i)
+			command=lambda i=i: self.toggleDeviceAt(i)
 		)
 		
 		toggleButt.grid(row=i, column=4, pady=5, padx=2.5)
@@ -192,7 +192,7 @@ class SmartHomeSystem:
 			parentFrame,
 			text="Edit",
 			padx=5,
-			command=lambda: self.editDeviceWindow(i)
+			command=lambda i=i: self.editDeviceWindow(i)
 		)
 		editButt.grid(row=i, column=5, pady=5, padx=2.5)
 		widgetList.append(editButt)
@@ -202,7 +202,7 @@ class SmartHomeSystem:
 			text="Remove",
 			padx=5,
 			fg="red",
-			command=lambda: self.removeDeviceAt(i)
+			command=lambda i=i: self.removeDeviceAt(i)
 		)
 		removeButt.grid(row=i, column=6, pady=5, padx=2.5)
 		widgetList.append(removeButt)
@@ -248,12 +248,12 @@ class SmartHomeSystem:
 		consumptionText = Label(addWin, text="Consumption rate, if adding a plug:")
 		consumptionText.pack(padx=10, pady=10)
 
-		consumption = IntVar(value=0)
+		consumptionVar = IntVar(value=0)
 		consumptionEntry = Spinbox(
 			addWin,
 			from_=0,
 			to=150,
-			textvariable=consumption,
+			textvariable=consumptionVar,
 			wrap=True
 		)
 		consumptionEntry.pack(padx=10, pady=10)
@@ -261,21 +261,29 @@ class SmartHomeSystem:
 		addPlugButt = Button(
 			addWin,
 			text="Add a plug",
-			command=lambda: self.addPlug(addWin, consumption.get())
+			command=lambda addWin=addWin, consumptionVar=consumptionVar: self.addPlug(addWin, consumptionVar)
 		)
 		addPlugButt.pack(side=LEFT, padx=10, pady=20)
 		
 		addDoorbellButt = Button(
 			addWin,
 			text="Add a doorbell",
-			command=lambda: self.addDoorbell(addWin)
+			command=lambda addWin=addWin: self.addDoorbell(addWin)
 		)
 		addDoorbellButt.pack(side=RIGHT, padx=10, pady=20)
 
 		addWin.mainloop()
 
-	def addPlug(self, addWin, consumption):
+	def addPlug(self, addWin, consumptionVar):
 		"""From the add window, adds a plug to the home, then destroys the window and refreshes the device list"""
+		try:
+			consumption = consumptionVar.get()
+		except:
+			messagebox.showwarning(
+				title="Check your values!",
+				message="Consumption rate must be a number, and cannot be blank"
+			)
+			return
 
 		if consumption < 0 or consumption > 150:
 			messagebox.showwarning(
@@ -297,17 +305,17 @@ class SmartHomeSystem:
 	############################################
 	# Edit window and its related functions
 	############################################
-	def editDeviceWindow(self, index):
+	def editDeviceWindow(self, i):
 		"""Shows a prompt to edit the properties of a device at the given index"""
 
-		device = self.home.getDeviceAt(index)
+		device = self.home.getDeviceAt(i)
 		deviceType = "plug" if isinstance(device, SmartPlug) else "doorbell"
 
 		editWin = Toplevel(self.win)
-		editWin.title(f"{deviceType.title()} at index {index}")
+		editWin.title(f"{deviceType.title()} at index {i}")
 		editWin.resizable(False, False)
 
-		label = Label(editWin, text=f"{deviceType.title()} at index {index}")
+		label = Label(editWin, text=f"{deviceType.title()} at index {i}")
 		label.grid(row=0, column=0, padx=10, columnspan=2, pady=10)
 
 		currentStatus = "ON" if device.getSwitchedOn() else "OFF"
@@ -318,7 +326,7 @@ class SmartHomeSystem:
 		toggleButt = Button(
 			editWin,
 			text="Toggle On/Off",
-			command=lambda: self.toggleDeviceAt(index, currentStatusVar)
+			command=lambda i=i: self.toggleDeviceAt(i, currentStatusVar)
 		)
 		toggleButt.grid(row=2, column=0, padx=10, columnspan=2, pady=5)
 
@@ -343,7 +351,7 @@ class SmartHomeSystem:
 			editButt = Button(
 				editWin,
 				text="Save",
-				command=lambda: self.editPlugConsumptionRate(editWin, index, consumption.get())
+				command=lambda editWin=editWin, i=i: self.editPlugConsumptionRate(editWin, i, consumption.get())
 			)
 			editButt.grid(row=5, column=1, padx=10, pady=10)
 
@@ -359,7 +367,7 @@ class SmartHomeSystem:
 			editButt = Button(
 				editWin,
 				text="Save",
-				command=lambda: self.editDoorbellSleepMode(editWin, index, sleepMode.get())
+				command=lambda editWin=editWin, i=i: self.editDoorbellSleepMode(editWin, i, sleepMode.get())
 			)
 			editButt.grid(row=4, column=1, padx=10, pady=10)
 

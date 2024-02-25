@@ -273,7 +273,7 @@ class SmartHomeSystem:
 			text="Toggle",
 			image=statusImage,
 			padx=5,
-			command=lambda: self.toggleDeviceAt(i)
+			command=lambda i=i: self.toggleDeviceAt(i)
 		)
 		
 		toggleButt.grid(row=i, column=4, pady=5, padx=2.5)
@@ -284,7 +284,7 @@ class SmartHomeSystem:
 			text="Schedule",
 			image=self.IMAGECLOCK,
 			padx=5,
-			command=lambda: self.scheduleDeviceWindow(i)
+			command=lambda i=i: self.scheduleDeviceWindow(i)
 		)
 		scheduleButt.grid(row=i, column=5, pady=5, padx=2.5)
 		widgetList.append(scheduleButt)
@@ -295,7 +295,7 @@ class SmartHomeSystem:
 			image=self.IMAGEDELETE,
 			padx=5,
 			fg="red",
-			command=lambda: self.removeDeviceAt(i)
+			command=lambda i=i: self.removeDeviceAt(i)
 		)
 		removeButt.grid(row=i, column=6, pady=5, padx=2.5)
 		widgetList.append(removeButt)
@@ -351,12 +351,12 @@ class SmartHomeSystem:
 		consumptionText = Label(addWin, text="Consumption rate, if adding a plug:")
 		consumptionText.pack(padx=10, pady=10)
 
-		consumption = IntVar(value=0)
+		consumptionVar = IntVar(value=0)
 		consumptionEntry = Spinbox(
 			addWin,
 			from_=0,
 			to=150,
-			textvariable=consumption,
+			textvariable=consumptionVar,
 			wrap=True
 		)
 		consumptionEntry.pack(padx=10, pady=10)
@@ -364,29 +364,38 @@ class SmartHomeSystem:
 		addPlugButt = Button(
 			addWin,
 			text="Add a plug",
-			command=lambda: self.addPlug(addWin, consumption.get())
+			command=lambda addWin=addWin: self.addPlug(addWin, consumptionVar)
 		)
 		addPlugButt.pack(side=LEFT, padx=10, pady=20)
 		
 		addDoorbellButt = Button(
 			addWin,
 			text="Add a doorbell",
-			command=lambda: self.addDoorbell(addWin)
+			command=lambda addWin=addWin: self.addDoorbell(addWin)
 		)
 		addDoorbellButt.pack(side=RIGHT, padx=10, pady=20)
 
 		addWin.mainloop()
 
-	def addPlug(self, addWin, consumption):
+	def addPlug(self, addWin, consumptionVar):
 		"""From the add window, adds a plug to the home, then destroys the window and refreshes the device list"""
+		try:
+			consumption = consumptionVar.get()
+		except:
+			# if a non-int is entered, or the box is left blank:
+			messagebox.showwarning(
+				title="Check your values!",
+				message="Consumption rate must be a number and cannot be blank"
+			)
+			return
 
 		if consumption < 0 or consumption > 150:
 			messagebox.showwarning(
 				title="Check your values!",
-				message="Consumption rate must be between 0 and 150"
+				message="Consumption rate must be a number between 0 and 150"
 			)
 			return
-
+		
 		self.home.addDevice(SmartPlug(consumption))
 		addWin.destroy()
 		self.refreshDeviceList()
@@ -400,7 +409,6 @@ class SmartHomeSystem:
 	############################################
 	# Device editing functions
 	############################################
-
 	def editPlugConsumptionRate(self, index, consumptionVar):
 		"""Sets the consumption rate of a plug, then refreshes the device list"""
 
