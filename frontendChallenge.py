@@ -572,22 +572,11 @@ class SmartHomeSystem:
 		self.win.mainloop()
 
 def main():
-	# home = setUpHome()
+	home = setUpHome()
 	# print(home)
-
-	home = SmartHome()
-	home.addDevice(SmartPlug(50))
-	home.addDevice(SmartDoorbell())
-	home.addDevice(SmartPlug(100))
-	home.addDevice(SmartDoorbell())
-	home.addDevice(SmartPlug(150))
-	home.addDevice(SmartPlug(123))
 
 	system = SmartHomeSystem(home)
 	# print(system)
-
-
-
 	system.run()
 
 main()
