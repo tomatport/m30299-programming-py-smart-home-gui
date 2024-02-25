@@ -234,24 +234,38 @@ class SmartHomeSystem:
 		widgetList.append(statusLabel)
 
 		if deviceType == "Plug":
-			consumptionText = f"{device.getConsumptionRate()}W"
-			consumptionLabel = Label(parentFrame, text=consumptionText, font=self.monoFont)
-			consumptionLabel.grid(row=i, column=3, pady=5, padx=2.5)
-			widgetList.append(consumptionLabel)
+			consumptionVar = IntVar(value=device.getConsumptionRate())
+			consumptionEntry = Spinbox(
+				parentFrame,
+				from_=0,
+				to=150,
+				width=5,
+				textvariable=consumptionVar,
+				wrap=True
+			)
+			consumptionEntry.grid(row=i, column=3, sticky=W, pady=5, padx=2.5)
+			widgetList.append(consumptionEntry)
+
+			consumptionEntry.bind(
+				"<FocusOut>",
+				lambda event, i=i, consumptionVar=consumptionVar:
+					self.editPlugConsumptionRate(i, consumptionVar)
+			)
+
 		elif deviceType == "Doorbell":
-			if device.getSleep():
-				# if sleeping
-				sleepImage = self.IMAGESLEEP
-				sleepText = "Sleeping"
-			else:
-				# if awake
-				sleepImage = self.IMAGESLEEPOFF
-				sleepText = "Not Sleeping"
+			sleepImage = self.IMAGESLEEP if device.getSleep() else self.IMAGESLEEPOFF
+			# sleepText = "Sleeping" if device.getSleep() else "Awake"
 
-			sleepLabel = Label(parentFrame, image=sleepImage, text=sleepText, justify=LEFT)
-			sleepLabel.grid(row=i, column=3, sticky=W, pady=5, padx=2.5)
-			widgetList.append(sleepLabel)
-
+			sleepButton = Button(
+				parentFrame,
+				# text=sleepText,
+				image=sleepImage,
+				compound=LEFT,
+				padx=5,
+				command=lambda i=i: self.editDoorbellSleepMode(i, not device.getSleep())
+			)
+			sleepButton.grid(row=i, column=3, pady=5, padx=2.5)
+			widgetList.append(sleepButton)
 		
 		statusImage = self.TOGGLEON if device.getSwitchedOn() else self.TOGGLEOFF
 		toggleButt = Button(
@@ -265,16 +279,6 @@ class SmartHomeSystem:
 		toggleButt.grid(row=i, column=4, pady=5, padx=2.5)
 		widgetList.append(toggleButt)
 
-		editButt = Button(
-			parentFrame,
-			text="Edit",
-			image=self.IMAGEEDIT,
-			padx=5,
-			command=lambda: self.editDeviceWindow(i)
-		)
-		editButt.grid(row=i, column=5, pady=5, padx=2.5)
-		widgetList.append(editButt)
-
 		scheduleButt = Button(
 			parentFrame,
 			text="Schedule",
@@ -282,7 +286,7 @@ class SmartHomeSystem:
 			padx=5,
 			command=lambda: self.scheduleDeviceWindow(i)
 		)
-		scheduleButt.grid(row=i, column=6, pady=5, padx=2.5)
+		scheduleButt.grid(row=i, column=5, pady=5, padx=2.5)
 		widgetList.append(scheduleButt)
 
 		removeButt = Button(
@@ -293,7 +297,7 @@ class SmartHomeSystem:
 			fg="red",
 			command=lambda: self.removeDeviceAt(i)
 		)
-		removeButt.grid(row=i, column=7, pady=5, padx=2.5)
+		removeButt.grid(row=i, column=6, pady=5, padx=2.5)
 		widgetList.append(removeButt)
 
 	############################################
@@ -394,81 +398,22 @@ class SmartHomeSystem:
 		self.refreshDeviceList()
 
 	############################################
-	# Edit window and its related functions
+	# Device editing functions
 	############################################
-	def editDeviceWindow(self, index):
-		"""Shows a prompt to edit the properties of a device at the given index"""
 
-		device = self.home.getDeviceAt(index)
-		deviceType = "plug" if isinstance(device, SmartPlug) else "doorbell"
+	def editPlugConsumptionRate(self, index, consumptionVar):
+		"""Sets the consumption rate of a plug, then refreshes the device list"""
 
-		editWin = Toplevel(self.win)
-		editWin.title(f"{deviceType.title()} at index {index}")
-		editWin.resizable(False, False)
-
-		label = Label(editWin, text=f"{deviceType.title()} at index {index}")
-		label.grid(row=0, column=0, padx=10, columnspan=2, pady=10)
-
-		currentStatus = "ON" if device.getSwitchedOn() else "OFF"
-		currentStatusVar = StringVar(value=currentStatus)
-		currentStatusLabel = Label(editWin, textvariable=currentStatusVar)
-		currentStatusLabel.grid(row=1, column=0, columnspan=2, padx=10, pady=5)
-
-		toggleButt = Button(
-			editWin,
-			text="Toggle On/Off",
-			command=lambda: self.toggleDeviceAt(index, currentStatusVar)
-		)
-		toggleButt.grid(row=2, column=0, padx=10, columnspan=2, pady=5)
-
-		separatorLine = Separator(editWin, orient=HORIZONTAL)
-		separatorLine.grid(row=3, column=0, columnspan=2, padx=10, pady=10, sticky="ew")
-
-
-		if deviceType == "plug":
-			consumptionText = Label(editWin, text="Consumption rate:")
-			consumptionText.grid(row=4, column=0, padx=10)
-
-			consumption = IntVar(value=device.getConsumptionRate())
-			consumptionEntry = Spinbox(
-				editWin,
-				from_=0,
-				to=150,
-				textvariable=consumption,
-				wrap=True
+		try:
+			consumption = consumptionVar.get()
+		except:
+			# if a non-int is entered, or the box is left blank:
+			messagebox.showwarning(
+				title="Check your values!",
+				message="Consumption rate must be a number and cannot be blank"
 			)
-			consumptionEntry.grid(row=5, column=0, padx=10, pady=10)
+			return
 
-			editButt = Button(
-				editWin,
-				text="Save",
-				command=lambda: self.editPlugConsumptionRate(editWin, index, consumption.get())
-			)
-			editButt.grid(row=5, column=1, padx=10, pady=10)
-
-		elif deviceType == "doorbell":
-			sleepMode = BooleanVar(value=device.getSleep())
-			sleepCheck = Checkbutton(
-				editWin,
-				text="Enable sleep mode",
-				variable=sleepMode
-			)
-			sleepCheck.grid(row=4, column=0, padx=10, pady=10)
-
-			editButt = Button(
-				editWin,
-				text="Save",
-				command=lambda: self.editDoorbellSleepMode(editWin, index, sleepMode.get())
-			)
-			editButt.grid(row=4, column=1, padx=10, pady=10)
-
-		editWin.mainloop()
-
-	def editPlugConsumptionRate(self, editWin, index, consumption):
-		"""
-		From the edit window, sets the consumption rate of a plug at the given index,
-		then destroys the window and refreshes the device list
-		"""
 		if consumption < 0 or consumption > 150:
 			messagebox.showwarning(
 				title="Check your values!",
@@ -477,16 +422,11 @@ class SmartHomeSystem:
 			return
 
 		self.home.getDeviceAt(index).setConsumptionRate(consumption)
-		editWin.destroy()
 		self.refreshDeviceList()
 
-	def editDoorbellSleepMode(self, editWin, index, sleepMode):
-		"""
-		From the edit window, sets the sleep mode of a doorbell at the given index,
-		then destroys the window and refreshes the device list
-		"""
+	def editDoorbellSleepMode(self, index, sleepMode):
+		"""Sets the sleep mode of a doorbell, then refreshes the device list"""
 		self.home.getDeviceAt(index).setSleep(sleepMode)
-		editWin.destroy()
 		self.refreshDeviceList()
 
 	############################################
