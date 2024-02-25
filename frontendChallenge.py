@@ -489,26 +489,27 @@ class SmartHomeSystem:
 			timeLabel = Label(timesFrame, text=f"{str(hr).zfill(2)}:00")
 			timeLabel.grid(row=hr, column=0, padx=2, pady=2)
 
-			optionsText = ["Turn Off", "Turn On", "No Change"]
+			optionsTexts = ["Turn Off", "Turn On", "No Change"]
 			optionsValues = [False, True, None]
 
-			actionCombo = Combobox(
+			# get current text value for the device's schedule
+			optionVar = StringVar()
+			optionVar.set(optionsTexts[optionsValues.index(deviceSchedule[hr])])
+
+			optionMenu = OptionMenu(
 				timesFrame,
-				values=optionsText,
-				width=15,
-				state="readonly" # user can't type in their own value
+				optionVar,
+				*optionsTexts
 			)
-			# set the current value to the device's schedule
-			actionCombo.current(optionsValues.index(deviceSchedule[hr]))
 
 			# when the user changes the value, update the device's schedule
-			actionCombo.bind(
-				"<<ComboboxSelected>>",
-				lambda event, i=hr, actionCombo=actionCombo:
-					self.updateDeviceSchedule(index, i, optionsValues[optionsText.index(actionCombo.get())])
+			optionMenu.bind(
+				"<Configure>",
+				lambda event, i=hr, optionVar=optionVar:
+					self.updateDeviceSchedule(index, i, optionsValues[optionsTexts.index(optionVar.get())])
 			)
 
-			actionCombo.grid(row=hr, column=1, padx=10, pady=10)
+			optionMenu.grid(row=hr, column=1, padx=10, pady=10)
 	
 		scheduleWin.mainloop()
 
