@@ -235,6 +235,11 @@ class SmartHomeSystem:
 
 		if deviceType == "Plug":
 			consumptionVar = IntVar(value=device.getConsumptionRate())
+
+			consumptionText = Label(parentFrame, text=f"{device.getConsumptionRate()}W")
+			consumptionText.grid(row=i, column=3, sticky=W, pady=5, padx=2.5)
+			widgetList.append(consumptionText)
+
 			consumptionEntry = Spinbox(
 				parentFrame,
 				from_=0,
@@ -243,28 +248,33 @@ class SmartHomeSystem:
 				textvariable=consumptionVar,
 				wrap=True
 			)
-			consumptionEntry.grid(row=i, column=3, sticky=W, pady=5, padx=2.5)
+			consumptionEntry.grid(row=i, column=4, sticky=W, pady=5, padx=2.5)
 			widgetList.append(consumptionEntry)
 
 			consumptionEntry.bind(
-				"<FocusOut>",
-				lambda event, i=i, consumptionVar=consumptionVar:
-					self.editPlugConsumptionRate(i, consumptionVar)
+				"<FocusOut>", # when the user clicks/tabs away from the entry
+				lambda event, i=i, consumptionVar=consumptionVar, consumptionEntry=consumptionEntry:
+					self.editPlugConsumptionRate(i, consumptionVar, consumptionEntry)
 			)
 
 		elif deviceType == "Doorbell":
 			sleepImage = self.IMAGESLEEP if device.getSleep() else self.IMAGESLEEPOFF
-			# sleepText = "Sleeping" if device.getSleep() else "Awake"
+			sleepText = "Sleeping" if device.getSleep() else "Awake"
 
+			sleepLabel = Label(parentFrame, text=sleepText, image=sleepImage, compound=LEFT)
+			sleepLabel.grid(row=i, column=3, pady=5, padx=2.5)
+			widgetList.append(sleepLabel)
+
+			sleepChangeImage = self.IMAGESLEEP if not device.getSleep() else self.IMAGESLEEPOFF
+			sleepChangeText = "Wake" if device.getSleep() else "Sleep"
 			sleepButton = Button(
 				parentFrame,
-				# text=sleepText,
-				image=sleepImage,
-				compound=LEFT,
+				text=sleepChangeText,
 				padx=5,
 				command=lambda i=i: self.editDoorbellSleepMode(i, not device.getSleep())
 			)
-			sleepButton.grid(row=i, column=3, pady=5, padx=2.5)
+
+			sleepButton.grid(row=i, column=4, pady=5, padx=2.5)
 			widgetList.append(sleepButton)
 		
 		statusImage = self.TOGGLEON if device.getSwitchedOn() else self.TOGGLEOFF
@@ -276,7 +286,7 @@ class SmartHomeSystem:
 			command=lambda i=i: self.toggleDeviceAt(i)
 		)
 		
-		toggleButt.grid(row=i, column=4, pady=5, padx=2.5)
+		toggleButt.grid(row=i, column=5, pady=5, padx=2.5)
 		widgetList.append(toggleButt)
 
 		scheduleButt = Button(
@@ -286,7 +296,7 @@ class SmartHomeSystem:
 			padx=5,
 			command=lambda i=i: self.scheduleDeviceWindow(i)
 		)
-		scheduleButt.grid(row=i, column=5, pady=5, padx=2.5)
+		scheduleButt.grid(row=i, column=6, pady=5, padx=2.5)
 		widgetList.append(scheduleButt)
 
 		removeButt = Button(
@@ -297,7 +307,7 @@ class SmartHomeSystem:
 			fg="red",
 			command=lambda i=i: self.removeDeviceAt(i)
 		)
-		removeButt.grid(row=i, column=6, pady=5, padx=2.5)
+		removeButt.grid(row=i, column=7, pady=5, padx=2.5)
 		widgetList.append(removeButt)
 
 	############################################
@@ -409,26 +419,29 @@ class SmartHomeSystem:
 	############################################
 	# Device editing functions
 	############################################
-	def editPlugConsumptionRate(self, index, consumptionVar):
+	def editPlugConsumptionRate(self, index, consumptionVar, consumptionEntry):
 		"""Sets the consumption rate of a plug, then refreshes the device list"""
 
 		try:
 			consumption = consumptionVar.get()
 		except:
 			# if a non-int is entered, or the box is left blank:
+			consumptionEntry.config(bg="red", fg="white")
 			messagebox.showwarning(
 				title="Check your values!",
-				message="Consumption rate must be a number and cannot be blank"
+				message="Consumption rate must be a number between 0 and 150"
 			)
 			return
 
 		if consumption < 0 or consumption > 150:
+			consumptionEntry.config(bg="red", fg="white")
 			messagebox.showwarning(
 				title="Check your values!",
-				message="Consumption rate must be between 0 and 150"
+				message="Consumption rate must be a number between 0 and 150"
 			)
 			return
 
+		consumptionEntry.config(fg="black", bg="white")
 		self.home.getDeviceAt(index).setConsumptionRate(consumption)
 		self.refreshDeviceList()
 
