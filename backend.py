@@ -4,10 +4,6 @@ class SmartDevice:
 	"""
 	def __init__(self):
 		self.switchedOn = False
-		self.schedule = []
-
-		for _ in range(24): # 0 - 23
-			self.schedule.append(None)
 
 	def toggleSwitch(self):
 		self.switchedOn = not self.switchedOn
@@ -15,19 +11,25 @@ class SmartDevice:
 	def getSwitchedOn(self):
 		return self.switchedOn
 
-class SmartPlug(SmartDevice):
+class SmartPlug():
 	def __init__(self, consumptionRate=0):
-		super().__init__()
+		self.switchedOn = False
+
 		if consumptionRate < 0 or consumptionRate > 150:
 			raise ValueError("Consumption rate must be between 0 and 150")
 		
 		self.consumptionRate = consumptionRate
 
+	def toggleSwitch(self):
+		self.switchedOn = not self.switchedOn
+
+	def getSwitchedOn(self):
+		return self.switchedOn
+
 	def getConsumptionRate(self):
 		return self.consumptionRate
 
 	def setConsumptionRate(self, consumptionRate):
-		# must be between 0 and 150
 		if consumptionRate < 0 or consumptionRate > 150:
 			raise ValueError("Consumption rate must be between 0 and 150")
 		else:
@@ -36,14 +38,20 @@ class SmartPlug(SmartDevice):
 	def __str__(self):
 		out = "SmartPlug"
 		out += f"\n   switched on: {self.getSwitchedOn()}"
-		out += f"\n   rate: {self.getConsumptionRate()}"
+		out += f"\n   comp. rate: {self.getConsumptionRate()}"
 		return out
 	
 
-class SmartDoorbell(SmartDevice):
+class SmartDoorbell():
 	def __init__(self):
-		super().__init__()
+		self.switchedOn = False
 		self.sleepMode = False
+
+	def toggleSwitch(self):
+		self.switchedOn = not self.switchedOn
+
+	def getSwitchedOn(self):
+		return self.switchedOn
 
 	def getSleep(self):
 		return self.sleepMode

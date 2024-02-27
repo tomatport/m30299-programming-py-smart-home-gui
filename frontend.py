@@ -1,6 +1,6 @@
 from backendChallenge import *
 from tkinter import *
-from tkinter import font, messagebox
+from tkinter import messagebox
 from tkinter.ttk import Separator
 
 def setUpHome():
@@ -66,21 +66,6 @@ class SmartHomeSystem:
 		self.footerFrame = Frame(self.win)
 		self.footerFrame.grid(row=2, column=0, padx=10, pady=10)
 
-		# set up fonts and images (must be done after creating the window)
-		# this changes the default font for everything
-		self.font = font.nametofont("TkDefaultFont")
-		self.font.configure(
-			family="Verdana",
-			size=11
-		)
-
-		# this changes the default monospace font for everything
-		self.monoFont = font.nametofont("TkFixedFont")
-		self.monoFont.configure(
-			family="Lucida Console",
-			size=11
-		)
-
 	def createStaticButtons(self):
 		"""Creates the buttons that will always be present in the GUI"""
 
@@ -106,7 +91,7 @@ class SmartHomeSystem:
 		# add, import, and export devices in the footer
 		addButt = Button(
 			self.footerFrame,
-			text="Add device",
+			text="Add",
 			command=self.addDeviceWindow,
 			padx=5,
 			pady=5
@@ -142,40 +127,20 @@ class SmartHomeSystem:
 		
 		if not isinstance(device, SmartDevice):
 			raise ValueError("Device must be a SmartDevice")
-				
-		deviceType = "Plug" if isinstance(device, SmartPlug) else "Doorbell"
+		
+		deviceStatus = "on" if device.getSwitchedOn() else "off"
+		
+		if isinstance(device, SmartPlug):
+			consumptionRate = device.getConsumptionRate()
+			textLabel = f"Plug: {deviceStatus}, Consumption: {consumptionRate}"
+		elif isinstance(device, SmartDoorbell):
+			sleepMode = "enabled" if device.getSleep() else "disabled"
+			textLabel = f"Doorbell: {deviceStatus}, Sleep mode: {sleepMode}"
+		else:
+			textLabel = "Unknown device"
 
-		indexLabel = Label(parentFrame, text=str(i))
-		indexLabel.grid(row=i, column=0, sticky=W, pady=5, padx=2.5)
-		widgetList.append(indexLabel)
-
-
-		deviceTypeLabel = Label(parentFrame, text=deviceType)
-		deviceTypeLabel.grid(row=i, column=1, sticky=W, pady=5, padx=2.5)
-		widgetList.append(deviceTypeLabel) # add it to a list so we can destroy it later on refresh
-
-		statusText = "ON" if device.getSwitchedOn() else "OFF"
-		statusTextVar = StringVar(value=statusText)
-		statusLabel = Label(parentFrame, textvariable=statusTextVar)
-		statusLabel.grid(row=i, column=2, sticky=W, pady=5, padx=2.5)
-		widgetList.append(statusLabel)
-
-		if deviceType == "Plug":
-			consumptionText = f"{device.getConsumptionRate()}W"
-			consumptionLabel = Label(parentFrame, text=consumptionText, font=self.monoFont)
-			consumptionLabel.grid(row=i, column=3, pady=5, padx=2.5)
-			widgetList.append(consumptionLabel)
-		elif deviceType == "Doorbell":
-			if device.getSleep():
-				# if sleeping
-				sleepText = "Sleeping"
-			else:
-				# if awake
-				sleepText = "Not Sleeping"
-
-			sleepLabel = Label(parentFrame, text=sleepText, justify=LEFT)
-			sleepLabel.grid(row=i, column=3, sticky=W, pady=5, padx=2.5)
-			widgetList.append(sleepLabel)
+		deviceLabel = Label(parentFrame, text=textLabel)
+		deviceLabel.grid(row=i, column=0, padx=10, pady=5)
 
 		
 		toggleButt = Button(
@@ -185,7 +150,7 @@ class SmartHomeSystem:
 			command=lambda i=i: self.toggleDeviceAt(i)
 		)
 		
-		toggleButt.grid(row=i, column=4, pady=5, padx=2.5)
+		toggleButt.grid(row=i, column=1, pady=5, padx=2.5)
 		widgetList.append(toggleButt)
 
 		editButt = Button(
@@ -194,17 +159,17 @@ class SmartHomeSystem:
 			padx=5,
 			command=lambda i=i: self.editDeviceWindow(i)
 		)
-		editButt.grid(row=i, column=5, pady=5, padx=2.5)
+		editButt.grid(row=i, column=2, pady=5, padx=2.5)
 		widgetList.append(editButt)
 
 		removeButt = Button(
 			parentFrame,
-			text="Remove",
+			text="Delete",
 			padx=5,
 			fg="red",
 			command=lambda i=i: self.removeDeviceAt(i)
 		)
-		removeButt.grid(row=i, column=6, pady=5, padx=2.5)
+		removeButt.grid(row=i, column=3, pady=5, padx=2.5)
 		widgetList.append(removeButt)
 
 	############################################

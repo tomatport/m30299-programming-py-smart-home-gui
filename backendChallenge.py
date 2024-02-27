@@ -57,7 +57,7 @@ class SmartPlug(SmartDevice):
 	def __str__(self):
 		out = "SmartPlug"
 		out += f"\n   switched on: {self.getSwitchedOn()}"
-		out += f"\n   rate: {self.getConsumptionRate()}"
+		out += f"\n   comp. rate: {self.getConsumptionRate()}"
 		return out
 	
 
