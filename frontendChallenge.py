@@ -1,7 +1,6 @@
 from backendChallenge import *
 from tkinter import *
 from tkinter import messagebox, filedialog, font
-from tkinter.ttk import Combobox, Separator
 
 IMAGESPATH = "images/"
 
@@ -96,8 +95,9 @@ class SmartHomeSystem:
 		self.IMAGECLOCK = PhotoImage(file=f"{IMAGESPATH}clock.png")
 		self.IMAGEEDIT = PhotoImage(file=f"{IMAGESPATH}edit.png")
 		self.IMAGEDELETE = PhotoImage(file=f"{IMAGESPATH}delete.png")
-		self.TOGGLEON = PhotoImage(file=f"{IMAGESPATH}toggleon.png")
-		self.TOGGLEOFF = PhotoImage(file=f"{IMAGESPATH}toggleoff.png")
+		self.IMAGETOGGLEON = PhotoImage(file=f"{IMAGESPATH}toggleon.png")
+		self.IMAGETOGGLEOFF = PhotoImage(file=f"{IMAGESPATH}toggleoff.png")
+		self.IMAGESCHEDULE = PhotoImage(file=f"{IMAGESPATH}schedule.png")
 
 		# also set up the time here
 		self.time = 0
@@ -118,7 +118,6 @@ class SmartHomeSystem:
 		)
 		turnOnAllButt.grid(row=0, column=0, padx=10)
 
-
 		turnOffAllButt = Button(
 			self.headerFrame,
 			text="Turn off all",
@@ -130,9 +129,6 @@ class SmartHomeSystem:
 		)
 		turnOffAllButt.grid(row=0, column=1, padx=10)
 
-		headerSeparator = Separator(self.headerFrame, orient=VERTICAL)
-		headerSeparator.grid(row=0, column=2, padx=20, sticky="ns")
-
 		# clock, also in the header
 		self.timeLabel = Label(
 			self.headerFrame,
@@ -143,7 +139,7 @@ class SmartHomeSystem:
 			padx=5,
 			pady=5
 		)
-		self.timeLabel.grid(row=0, column=3, padx=10)
+		self.timeLabel.grid(row=0, column=2, padx=10)
 
 		# add, import, and export devices in the footer
 		addButt = Button(
@@ -157,9 +153,6 @@ class SmartHomeSystem:
 		)
 		addButt.grid(row=0, column=0, padx=10)
 
-		footerSeparator = Separator(self.footerFrame, orient=VERTICAL)
-		footerSeparator.grid(row=0, column=1, padx=20, sticky="ns")
-
 		importButt = Button(
 			self.footerFrame,
 			text="Import",
@@ -169,7 +162,7 @@ class SmartHomeSystem:
 			padx=5,
 			pady=5
 		)
-		importButt.grid(row=0, column=2, padx=10)
+		importButt.grid(row=0, column=1, padx=10)
 
 		exportButt = Button(
 			self.footerFrame,
@@ -180,7 +173,7 @@ class SmartHomeSystem:
 			padx=5,
 			pady=5
 		)
-		exportButt.grid(row=0, column=3, padx=10)
+		exportButt.grid(row=0, column=2, padx=10)
 
 	def refreshDeviceList(self):
 		"""
@@ -215,7 +208,7 @@ class SmartHomeSystem:
 		deviceType = "Plug" if isinstance(device, SmartPlug) else "Doorbell"
 
 		indexLabel = Label(parentFrame, text=str(i))
-		indexLabel.grid(row=i, column=0, sticky=W, pady=5, padx=2.5)
+		indexLabel.grid(row=i, column=0, sticky=EW, pady=5, padx=2.5)
 		widgetList.append(indexLabel)
 
 		if deviceType == "Plug":
@@ -223,21 +216,35 @@ class SmartHomeSystem:
 		elif deviceType == "Doorbell":
 			deviceImage = self.IMAGEDOORBELLON
 
-		deviceTypeLabel = Label(parentFrame, text=deviceType, image=deviceImage, compound=LEFT)
-		deviceTypeLabel.grid(row=i, column=1, sticky=W, pady=5, padx=2.5)
+		deviceTypeLabel = Label(parentFrame, text=deviceType, image=deviceImage, compound=LEFT, width=120)
+		deviceTypeLabel.grid(row=i, column=1, sticky=EW, pady=5, padx=2.5)
 		widgetList.append(deviceTypeLabel) # add it to a list so we can destroy it later on refresh
 
 		statusText = "ON" if device.getSwitchedOn() else "OFF"
 		statusTextVar = StringVar(value=statusText)
-		statusLabel = Label(parentFrame, textvariable=statusTextVar)
-		statusLabel.grid(row=i, column=2, sticky=W, pady=5, padx=2.5)
+		statusLabel = Label(parentFrame, textvariable=statusTextVar, width=5)
+		statusLabel.grid(row=i, column=2, sticky=EW, pady=5, padx=2.5)
 		widgetList.append(statusLabel)
+
+		statusImage = self.IMAGETOGGLEON if device.getSwitchedOn() else self.IMAGETOGGLEOFF
+		toggleButt = Button(
+			parentFrame,
+			text="Toggle",
+			image=statusImage,
+			padx=5,
+			highlightthickness=0,
+			bd=0,
+			command=lambda i=i: self.toggleDeviceAt(i)
+		)
+		toggleButt.grid(row=i, column=3, pady=5, padx=2.5)
+		widgetList.append(toggleButt)
 
 		if deviceType == "Plug":
 			consumptionVar = IntVar(value=device.getConsumptionRate())
 
-			consumptionText = Label(parentFrame, text=f"{device.getConsumptionRate()}W")
-			consumptionText.grid(row=i, column=3, sticky=W, pady=5, padx=2.5)
+			# is consumption rate in W? looks weird without any unit so we'll go with that
+			consumptionText = Label(parentFrame, text=f"{device.getConsumptionRate()}W", width=5)
+			consumptionText.grid(row=i, column=4, sticky=EW, pady=5, padx=2.5)
 			widgetList.append(consumptionText)
 
 			consumptionEntry = Spinbox(
@@ -248,55 +255,50 @@ class SmartHomeSystem:
 				textvariable=consumptionVar,
 				wrap=True
 			)
-			consumptionEntry.grid(row=i, column=4, sticky=W, pady=5, padx=2.5)
+			consumptionEntry.grid(row=i, column=5, sticky=EW, pady=5, padx=2.5)
 			widgetList.append(consumptionEntry)
 
-			consumptionEntry.bind(
-				"<FocusOut>", # when the user clicks/tabs away from the entry
-				lambda event, i=i, consumptionVar=consumptionVar, consumptionEntry=consumptionEntry:
-					self.editPlugConsumptionRate(i, consumptionVar, consumptionEntry)
+			consumptionConfirmButt = Button(
+				parentFrame,
+				text="Set",
+				image=self.IMAGEEDIT,
+				compound=LEFT,
+				padx=5,
+				command=lambda i=i, consumptionVar=consumptionVar:
+						self.editPlugConsumptionRate(i, consumptionVar)
 			)
+			consumptionConfirmButt.grid(row=i, column=6, pady=5, padx=2.5)
+			widgetList.append(consumptionConfirmButt)
 
 		elif deviceType == "Doorbell":
 			sleepImage = self.IMAGESLEEP if device.getSleep() else self.IMAGESLEEPOFF
-			sleepText = "Sleeping" if device.getSleep() else "Awake"
 
-			sleepLabel = Label(parentFrame, text=sleepText, image=sleepImage, compound=LEFT)
-			sleepLabel.grid(row=i, column=3, pady=5, padx=2.5)
+			sleepLabel = Label(parentFrame, image=sleepImage)
+			sleepLabel.grid(row=i, column=4, pady=5, padx=2.5)
 			widgetList.append(sleepLabel)
 
-			sleepChangeImage = self.IMAGESLEEP if not device.getSleep() else self.IMAGESLEEPOFF
-			sleepChangeText = "Wake" if device.getSleep() else "Sleep"
-			sleepButton = Button(
+			sleepChangeCheckbox = Checkbutton(
 				parentFrame,
-				text=sleepChangeText,
-				padx=5,
-				command=lambda i=i: self.editDoorbellSleepMode(i, not device.getSleep())
+				text="Sleep Mode",
+				command=lambda i=i: self.setDoorbellSleepMode(i, not device.getSleep())
 			)
 
-			sleepButton.grid(row=i, column=4, pady=5, padx=2.5)
-			widgetList.append(sleepButton)
-		
-		statusImage = self.TOGGLEON if device.getSwitchedOn() else self.TOGGLEOFF
-		toggleButt = Button(
-			parentFrame,
-			text="Toggle",
-			image=statusImage,
-			padx=5,
-			command=lambda i=i: self.toggleDeviceAt(i)
-		)
-		
-		toggleButt.grid(row=i, column=5, pady=5, padx=2.5)
-		widgetList.append(toggleButt)
+			if device.getSleep():
+				# checkbox should be checked if device is sleeping (in sleep mode)
+				sleepChangeCheckbox.select()
+				
+			sleepChangeCheckbox.grid(row=i, column=5, columnspan=2, pady=5, padx=2.5)
+
+			widgetList.append(sleepChangeCheckbox)
 
 		scheduleButt = Button(
 			parentFrame,
 			text="Schedule",
-			image=self.IMAGECLOCK,
+			image=self.IMAGESCHEDULE,
 			padx=5,
 			command=lambda i=i: self.scheduleDeviceWindow(i)
 		)
-		scheduleButt.grid(row=i, column=6, pady=5, padx=2.5)
+		scheduleButt.grid(row=i, column=7, pady=5, padx=2.5)
 		widgetList.append(scheduleButt)
 
 		removeButt = Button(
@@ -307,7 +309,7 @@ class SmartHomeSystem:
 			fg="red",
 			command=lambda i=i: self.removeDeviceAt(i)
 		)
-		removeButt.grid(row=i, column=7, pady=5, padx=2.5)
+		removeButt.grid(row=i, column=8, pady=5, padx=2.5)
 		widgetList.append(removeButt)
 
 	############################################
@@ -357,38 +359,48 @@ class SmartHomeSystem:
 		addWin = Toplevel(self.win)
 		addWin.title("Add a device")
 		addWin.resizable(False, False)
-		
-		consumptionText = Label(addWin, text="Consumption rate, if adding a plug:")
-		consumptionText.pack(padx=10, pady=10)
+
+		consumptionText = Label(addWin, text="Plug consumption rate (0-150):")
+		consumptionText.grid(row=0, column=0, padx=10, pady=10)
 
 		consumptionVar = IntVar(value=0)
 		consumptionEntry = Spinbox(
 			addWin,
 			from_=0,
 			to=150,
+			width=4,
 			textvariable=consumptionVar,
 			wrap=True
 		)
-		consumptionEntry.pack(padx=10, pady=10)
+		consumptionEntry.grid(row=0, column=1, padx=10, pady=10)
 
 		addPlugButt = Button(
 			addWin,
 			text="Add a plug",
-			command=lambda addWin=addWin: self.addPlug(addWin, consumptionVar)
+			command=lambda addWin=addWin, consumptionVar=consumptionVar:
+					self.addPlug(addWin, consumptionVar)
 		)
-		addPlugButt.pack(side=LEFT, padx=10, pady=20)
-		
+		addPlugButt.grid(row=1, column=0, columnspan=2,
+		                 padx=10, pady=10, sticky="we")
+
+		orText = Label(addWin, text="or")
+		orText.grid(row=2, column=0, columnspan=2, padx=10, pady=10, sticky="we")
+
 		addDoorbellButt = Button(
 			addWin,
 			text="Add a doorbell",
 			command=lambda addWin=addWin: self.addDoorbell(addWin)
 		)
-		addDoorbellButt.pack(side=RIGHT, padx=10, pady=20)
+		addDoorbellButt.grid(row=3, column=0, columnspan=2,
+		                     padx=10, pady=10, sticky="we")
 
 		addWin.mainloop()
 
 	def addPlug(self, addWin, consumptionVar):
-		"""From the add window, adds a plug to the home, then destroys the window and refreshes the device list"""
+		"""
+		From the add window, adds a plug to the home,
+		then destroys the window and refreshes the device list
+		"""
 		try:
 			consumption = consumptionVar.get()
 		except:
@@ -411,7 +423,10 @@ class SmartHomeSystem:
 		self.refreshDeviceList()
 
 	def addDoorbell(self, addWin):
-		"""From the add window, adds a doorbell to the home, then destroys the window and refreshes the device list"""
+		"""
+		From the add window, adds a doorbell to the home,
+		then destroys the window and refreshes the device list
+		"""
 		self.home.addDevice(SmartDoorbell())
 		addWin.destroy()
 		self.refreshDeviceList()
@@ -419,14 +434,13 @@ class SmartHomeSystem:
 	############################################
 	# Device editing functions
 	############################################
-	def editPlugConsumptionRate(self, index, consumptionVar, consumptionEntry):
+	def editPlugConsumptionRate(self, index, consumptionVar):
 		"""Sets the consumption rate of a plug, then refreshes the device list"""
 
 		try:
 			consumption = consumptionVar.get()
 		except:
 			# if a non-int is entered, or the box is left blank:
-			consumptionEntry.config(bg="red", fg="white")
 			messagebox.showwarning(
 				title="Check your values!",
 				message="Consumption rate must be a number between 0 and 150"
@@ -434,18 +448,16 @@ class SmartHomeSystem:
 			return
 
 		if consumption < 0 or consumption > 150:
-			consumptionEntry.config(bg="red", fg="white")
 			messagebox.showwarning(
 				title="Check your values!",
 				message="Consumption rate must be a number between 0 and 150"
 			)
 			return
 
-		consumptionEntry.config(fg="black", bg="white")
 		self.home.getDeviceAt(index).setConsumptionRate(consumption)
 		self.refreshDeviceList()
 
-	def editDoorbellSleepMode(self, index, sleepMode):
+	def setDoorbellSleepMode(self, index, sleepMode):
 		"""Sets the sleep mode of a doorbell, then refreshes the device list"""
 		self.home.getDeviceAt(index).setSleep(sleepMode)
 		self.refreshDeviceList()
@@ -500,7 +512,7 @@ class SmartHomeSystem:
 
 		for hr in range(24): # 0 to 23
 			timeLabel = Label(timesFrame, text=f"{str(hr).zfill(2)}:00")
-			timeLabel.grid(row=hr, column=0, padx=2, pady=2)
+			timeLabel.grid(row=hr, column=0, pady=2)
 
 			optionsTexts = ["Turn Off", "Turn On", "No Change"]
 			optionsValues = [False, True, None]
@@ -522,7 +534,7 @@ class SmartHomeSystem:
 					self.updateDeviceSchedule(index, i, optionsValues[optionsTexts.index(optionVar.get())])
 			)
 
-			optionMenu.grid(row=hr, column=1, padx=10, pady=10)
+			optionMenu.grid(row=hr, column=1, padx=0, pady=2)
 	
 		scheduleWin.mainloop()
 
@@ -554,7 +566,7 @@ class SmartHomeSystem:
 		# warn that this will overwrite the current devices
 		sure = messagebox.askyesno(
 			title="Importing devices",
-			message="Importing  will overwrite the current devices. Are you sure?"
+			message="Importing will overwrite the current devices. Are you sure?"
 		)
 		if not sure:
 			return
@@ -585,8 +597,15 @@ class SmartHomeSystem:
 		self.win.mainloop()
 
 def main():
-	home = setUpHome()
+	# home = setUpHome()
 	# print(home)
+
+	home = SmartHome()
+	home.addDevice(SmartPlug(50))
+	home.addDevice(SmartDoorbell())
+	home.addDevice(SmartPlug(100))
+	home.addDevice(SmartDoorbell())
+	home.addDevice(SmartPlug(75))
 
 	system = SmartHomeSystem(home)
 	# print(system)
