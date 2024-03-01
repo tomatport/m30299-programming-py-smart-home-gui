@@ -115,7 +115,7 @@ class SmartHomeSystem:
 
 		if numDevices == 0:
 			noDevicesLabel = Label(self.devicesFrame, text="No devices")
-			noDevicesLabel.grid(row=0, column=0)
+			noDevicesLabel.grid(row=0, column=0, columnspan=4)
 			self.deviceWidgets.append(noDevicesLabel)
 
 	def createDeviceRow(self, widgetList, parentFrame, device, i):
@@ -138,7 +138,7 @@ class SmartHomeSystem:
 		else:
 			textLabel = "Unknown device"
 
-		deviceLabel = Label(parentFrame, text=textLabel)
+		deviceLabel = Label(parentFrame, text=textLabel, width=28)
 		deviceLabel.grid(row=i, column=0, padx=10, pady=5)
 		widgetList.append(deviceLabel) # add to list to be destroyed later
 
@@ -223,8 +223,8 @@ class SmartHomeSystem:
 		addPlugButt = Button(
 			addWin,
 			text="Add a plug",
-			command=lambda addWin=addWin, consumptionVar=consumptionVar: self.addPlug(
-				addWin, consumptionVar)
+			command=lambda addWin=addWin, consumptionVar=consumptionVar:
+					self.addPlug(addWin, consumptionVar)
 		)
 		addPlugButt.grid(row=1, column=0, columnspan=2,
 		                 padx=10, pady=10, sticky=EW)
@@ -371,7 +371,7 @@ class SmartHomeSystem:
 
 def main():
 	home = setUpHome()
-	print(home)
+	# print(home)
 
 	system = SmartHomeSystem(home)
 	# print(system)
