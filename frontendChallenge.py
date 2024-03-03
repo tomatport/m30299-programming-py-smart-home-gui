@@ -83,21 +83,20 @@ class SmartHomeSystem:
 		)
 
 		# here are all of our images for the devices, to be used in the GUI
-		self.IMAGEPLUGON = PhotoImage(file=f"{IMAGESPATH}plugon.png")
-		self.IMAGEPLUGOFF = PhotoImage(file=f"{IMAGESPATH}plugoff.png")
-		self.IMAGEDOORBELLON = PhotoImage(file=f"{IMAGESPATH}doorbellon.png")
-		self.IMAGEDOORBELLOFF = PhotoImage(file=f"{IMAGESPATH}doorbelloff.png")
-		self.IMAGESLEEP = PhotoImage(file=f"{IMAGESPATH}sleep.png")
-		self.IMAGESLEEPOFF = PhotoImage(file=f"{IMAGESPATH}sleepoff.png")
-		self.IMAGEIMPORT = PhotoImage(file=f"{IMAGESPATH}import.png")
-		self.IMAGEEXPORT = PhotoImage(file=f"{IMAGESPATH}export.png")
 		self.IMAGEADD = PhotoImage(file=f"{IMAGESPATH}add.png")
 		self.IMAGECLOCK = PhotoImage(file=f"{IMAGESPATH}clock.png")
-		self.IMAGEEDIT = PhotoImage(file=f"{IMAGESPATH}edit.png")
 		self.IMAGEDELETE = PhotoImage(file=f"{IMAGESPATH}delete.png")
-		self.IMAGETOGGLEON = PhotoImage(file=f"{IMAGESPATH}toggleon.png")
-		self.IMAGETOGGLEOFF = PhotoImage(file=f"{IMAGESPATH}toggleoff.png")
+		self.IMAGEEDIT = PhotoImage(file=f"{IMAGESPATH}edit.png")
+		self.IMAGEEXPORT = PhotoImage(file=f"{IMAGESPATH}export.png")
+		self.IMAGEIMPORT = PhotoImage(file=f"{IMAGESPATH}import.png")
+		self.IMAGEDOORBELL = PhotoImage(file=f"{IMAGESPATH}doorbell.png")
+		self.IMAGESLEEP = PhotoImage(file=f"{IMAGESPATH}sleep.png")
+		self.IMAGESLEEPOFF = PhotoImage(file=f"{IMAGESPATH}sleepoff.png")
 		self.IMAGESCHEDULE = PhotoImage(file=f"{IMAGESPATH}schedule.png")
+		self.IMAGEPLUG = PhotoImage(file=f"{IMAGESPATH}plug.png")
+		self.IMAGEPLUGOFF = PhotoImage(file=f"{IMAGESPATH}plugoff.png")
+		self.IMAGETOGGLEOFF = PhotoImage(file=f"{IMAGESPATH}toggleoff.png")
+		self.IMAGETOGGLEON = PhotoImage(file=f"{IMAGESPATH}toggleon.png")
 
 		# also set up the time here
 		self.time = 0
@@ -110,7 +109,7 @@ class SmartHomeSystem:
 		turnOnAllButt = Button(
 			self.headerFrame,
 			text="Turn on all",
-			image=self.IMAGEPLUGON,
+			image=self.IMAGEPLUG,
 			compound=LEFT,
 			command=self.turnOnAll,
 			padx=5,
@@ -212,9 +211,9 @@ class SmartHomeSystem:
 		widgetList.append(indexLabel)
 
 		if deviceType == "Plug":
-			deviceImage = self.IMAGEPLUGON
+			deviceImage = self.IMAGEPLUG
 		elif deviceType == "Doorbell":
-			deviceImage = self.IMAGEDOORBELLON
+			deviceImage = self.IMAGEDOORBELL
 
 		deviceTypeLabel = Label(parentFrame, text=deviceType, image=deviceImage, compound=LEFT, width=120)
 		deviceTypeLabel.grid(row=i, column=1, sticky=EW, pady=5, padx=2.5)
