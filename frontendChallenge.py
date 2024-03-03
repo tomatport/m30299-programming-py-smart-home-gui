@@ -263,6 +263,8 @@ class SmartHomeSystem:
 				image=self.IMAGEEDIT,
 				compound=LEFT,
 				padx=5,
+				# we need to pass the tk variable here rather than its value
+				# so we can show a warning if it's invalid before adding the device
 				command=lambda i=i, consumptionVar=consumptionVar:
 						self.editPlugConsumptionRate(i, consumptionVar)
 			)
@@ -276,10 +278,13 @@ class SmartHomeSystem:
 			sleepLabel.grid(row=i, column=4, pady=5, padx=2.5)
 			widgetList.append(sleepLabel)
 
+			invertCurrentSleepStatus = not device.getSleep()
+
 			sleepChangeCheckbox = Checkbutton(
 				parentFrame,
 				text="Sleep Mode",
-				command=lambda i=i: self.setDoorbellSleepMode(i, not device.getSleep())
+				command=lambda i=i, sleepMode=invertCurrentSleepStatus:
+						self.setDoorbellSleepMode(i, invertCurrentSleepStatus)
 			)
 
 			if device.getSleep():
@@ -376,6 +381,8 @@ class SmartHomeSystem:
 		addPlugButt = Button(
 			addWin,
 			text="Add a plug",
+			# as with adding a plug, we need to pass the variable here rather than its value
+			# so we can show a warning if it's invalid before editing the device
 			command=lambda addWin=addWin, consumptionVar=consumptionVar:
 					self.addPlug(addWin, consumptionVar)
 		)
@@ -527,10 +534,11 @@ class SmartHomeSystem:
 			)
 
 			# when the user changes the value, update the device's schedule
+			# bit ugly but it seems to work reliably
 			optionMenu.bind(
 				"<Configure>",
 				lambda event, i=hr, optionVar=optionVar:
-					self.updateDeviceSchedule(index, i, optionsValues[optionsTexts.index(optionVar.get())])
+				self.updateDeviceSchedule(index, i, optionsValues[optionsTexts.index(optionVar.get())])
 			)
 
 			optionMenu.grid(row=hr, column=1, padx=0, pady=2)
@@ -547,6 +555,7 @@ class SmartHomeSystem:
 	def exportDevices(self):
 		"""Lets the user export the devices to a CSV file after choosing a location"""
 		content = self.home.getCSV()
+
 		file = filedialog.asksaveasfile(
 			mode="w",
 			defaultextension=".csv",
@@ -556,6 +565,14 @@ class SmartHomeSystem:
 		try:
 			file.write(content)
 			file.close()
+		except AttributeError:  # "NoneType has no attribute 'read'"
+			return  # user cancelled saving the file
+		except PermissionError:
+			messagebox.showerror(
+				title="Permission Denied",
+				message="You do not have permission to write this file"
+			)
+			return
 		except Exception as e:
 			messagebox.showerror(title="Error Writing File", message=f"{e}")
 			return
@@ -578,6 +595,14 @@ class SmartHomeSystem:
 		try:
 			content = file.read()
 			file.close()
+		except AttributeError: # "NoneType has no attribute 'read'"
+			return # user cancelled opening the file
+		except PermissionError:
+			messagebox.showerror(
+				title="Permission Denied",
+				message="You do not have permission to read this file"
+			)
+			return
 		except Exception as e:
 			messagebox.showerror(title="Error Reading File", message=f"{e}")
 			return
@@ -596,15 +621,15 @@ class SmartHomeSystem:
 		self.win.mainloop()
 
 def main():
-	# home = setUpHome()
+	home = setUpHome()
 	# print(home)
 
-	home = SmartHome()
-	home.addDevice(SmartPlug(50))
-	home.addDevice(SmartDoorbell())
-	home.addDevice(SmartPlug(100))
-	home.addDevice(SmartDoorbell())
-	home.addDevice(SmartPlug(75))
+	# home = SmartHome()
+	# home.addDevice(SmartPlug(50))
+	# home.addDevice(SmartDoorbell())
+	# home.addDevice(SmartPlug(100))
+	# home.addDevice(SmartDoorbell())
+	# home.addDevice(SmartPlug(75))
 
 	system = SmartHomeSystem(home)
 	# print(system)

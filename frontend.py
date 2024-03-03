@@ -223,6 +223,8 @@ class SmartHomeSystem:
 		addPlugButt = Button(
 			addWin,
 			text="Add a plug",
+			# we need to pass the tk variable here rather than its value
+			# so we can show a warning if it's invalid before adding the device
 			command=lambda addWin=addWin, consumptionVar=consumptionVar:
 					self.addPlug(addWin, consumptionVar)
 		)
@@ -298,12 +300,12 @@ class SmartHomeSystem:
 			consumptionText = Label(editWin, text="Consumption rate:")
 			consumptionText.grid(row=1, column=0, padx=10)
 
-			consumption = IntVar(value=device.getConsumptionRate())
+			consumptionVar = IntVar(value=device.getConsumptionRate())
 			consumptionEntry = Spinbox(
 				editWin,
 				from_=0,
 				to=150,
-				textvariable=consumption,
+				textvariable=consumptionVar,
 				wrap=True
 			)
 			consumptionEntry.grid(row=2, column=0, padx=10, pady=10)
@@ -311,35 +313,46 @@ class SmartHomeSystem:
 			editButt = Button(
 				editWin,
 				text="Save",
-				command=lambda editWin=editWin, i=i:
-						self.editPlugConsumptionRate(editWin, i, consumption.get())
+				# as with adding a plug, we need to pass the variable here rather than its value
+				# so we can show a warning if it's invalid before editing the device
+				command=lambda editWin=editWin, i=i, consumptionVar=consumptionVar:
+						self.editPlugConsumptionRate(editWin, i, consumptionVar)
 			)
 			editButt.grid(row=2, column=1, padx=10, pady=10)
 
 		elif deviceType == "doorbell":
-			sleepMode = BooleanVar(value=device.getSleep())
+			sleepModeVar = BooleanVar(value=device.getSleep())
 			sleepCheck = Checkbutton(
 				editWin,
 				text="Enable sleep mode",
-				variable=sleepMode
+				variable=sleepModeVar
 			)
 			sleepCheck.grid(row=2, column=0, padx=10, pady=10)
 
 			editButt = Button(
 				editWin,
 				text="Save",
-				command=lambda editWin=editWin, i=i:
+				command=lambda editWin=editWin, i=i, sleepMode=sleepModeVar.get():
 						self.setDoorbellSleepMode(editWin, i, sleepMode.get())
 			)
 			editButt.grid(row=2, column=1, padx=10, pady=10)
 
 		editWin.mainloop()
 
-	def editPlugConsumptionRate(self, editWin, index, consumption):
+	def editPlugConsumptionRate(self, editWin, i, consumptionVar):
 		"""
 		From the edit window, sets the consumption rate of a plug at the given index,
 		then destroys the window and refreshes the device list
 		"""
+		try:
+			consumption = consumptionVar.get()
+		except:
+			messagebox.showwarning(
+				title="Check your values!",
+				message="Consumption rate must be a number, and cannot be blank"
+			)
+			return
+
 		if consumption < 0 or consumption > 150:
 			messagebox.showwarning(
 				title="Check your values!",
@@ -347,16 +360,16 @@ class SmartHomeSystem:
 			)
 			return
 
-		self.home.getDeviceAt(index).setConsumptionRate(consumption)
+		self.home.getDeviceAt(i).setConsumptionRate(consumption)
 		editWin.destroy()
 		self.refreshDeviceList()
 
-	def setDoorbellSleepMode(self, editWin, index, sleepMode):
+	def setDoorbellSleepMode(self, editWin, i, sleepMode):
 		"""
 		From the edit window, sets the sleep mode of a doorbell at the given index,
 		then destroys the window and refreshes the device list
 		"""
-		self.home.getDeviceAt(index).setSleep(sleepMode)
+		self.home.getDeviceAt(i).setSleep(sleepMode)
 		editWin.destroy()
 		self.refreshDeviceList()
 
@@ -372,6 +385,13 @@ class SmartHomeSystem:
 def main():
 	home = setUpHome()
 	# print(home)
+
+	# home = SmartHome()
+	# home.addDevice(SmartPlug(50))
+	# home.addDevice(SmartDoorbell())
+	# home.addDevice(SmartPlug(100))
+	# home.addDevice(SmartDoorbell())
+	# home.addDevice(SmartPlug(75))
 
 	system = SmartHomeSystem(home)
 	# print(system)

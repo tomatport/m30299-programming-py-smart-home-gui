@@ -52,7 +52,7 @@ class SmartPlug(SmartDevice):
 			self.consumptionRate = consumptionRate
 
 	def getCSVRow(self):
-		return f"SmartPlug, {self.getSwitchedOn()}, {self.getScheduleText()}, {self.getConsumptionRate()}"
+		return f"SmartPlug, {self.getSwitchedOn()}, {self.getConsumptionRate()}, {self.getScheduleText()}"
 
 	def __str__(self):
 		out = "SmartPlug"
@@ -76,7 +76,7 @@ class SmartDoorbell(SmartDevice):
 			raise ValueError("Sleep mode must be True or False")
 
 	def getCSVRow(self):
-		return f"SmartDoorbell, {self.getSwitchedOn()}, {self.getScheduleText()}, {self.getSleep()}"
+		return f"SmartDoorbell, {self.getSwitchedOn()}, {self.getSleep()}, {self.getScheduleText()}"
 
 	def __str__(self):
 		out = "SmartDoorbell"
@@ -121,7 +121,7 @@ class SmartHome():
 			device.switchedOn = True
 
 	def getCSV(self):
-		out = "DeviceType, Switched On, Schedule, Consumption Rate or Sleep State\n"
+		out = "DeviceType, Switched On, Device Option, Schedule\n"
 		for device in self.devices:
 			out += f"{device.getCSVRow()}\n"
 		return out
@@ -129,8 +129,7 @@ class SmartHome():
 	def importCSV(self, csv):
 		self.devices = []
 
-		# remove first line
-		csv = csv.split("\n")[1:]
+		csv = csv.split("\n")[1:]  # remove first line
 		for line in csv:
 			if not line:
 				continue
@@ -138,8 +137,8 @@ class SmartHome():
 			device = line.split(", ")
 			deviceType = device[0]
 			switchedOn = device[1]
-			schedule = device[2]
-			option = device[3]
+			option = device[2]
+			schedule = device[3]
 
 			if deviceType == "SmartPlug":
 				newDevice = SmartPlug(int(option))
