@@ -384,17 +384,8 @@ class SmartHomeSystem:
 
 def main():
 	home = setUpHome()
-	# print(home)
-
-	# home = SmartHome()
-	# home.addDevice(SmartPlug(50))
-	# home.addDevice(SmartDoorbell())
-	# home.addDevice(SmartPlug(100))
-	# home.addDevice(SmartDoorbell())
-	# home.addDevice(SmartPlug(75))
 
 	system = SmartHomeSystem(home)
-	# print(system)
 	system.run()
 
 main()
