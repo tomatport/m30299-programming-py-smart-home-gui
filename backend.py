@@ -36,9 +36,9 @@ class SmartPlug():
 			self.consumptionRate = consumptionRate
 
 	def __str__(self):
-		out = "SmartPlug"
-		out += f"\n   switched on: {self.getSwitchedOn()}"
-		out += f"\n   comp. rate: {self.getConsumptionRate()}"
+		out = "SmartPlug:"
+		out += f" switched on: {self.getSwitchedOn()}"
+		out += f", comp. rate: {self.getConsumptionRate()}"
 		return out
 	
 
@@ -63,9 +63,9 @@ class SmartDoorbell():
 			raise ValueError("Sleep mode must be True or False")
 
 	def __str__(self):
-		out = "SmartDoorbell"
-		out += f"\n   switched on: {self.getSwitchedOn()}"
-		out += f"\n   sleep mode: {self.getSleep()}"
+		out = "SmartDoorbell:"
+		out += f" switched on: {self.getSwitchedOn()}"
+		out += f", sleep mode: {self.getSleep()}"
 		return out
 	
 class SmartHome():
