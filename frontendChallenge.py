@@ -10,6 +10,14 @@ def setUpHome():
 	newHome = SmartHome()
 	print("🏡 Setting up your Smart Home")
 
+	choice = input("Type 'shell' to manually add 5 devices, or 'file' to import from a CSV file: ")
+	choice = choice.lower().replace(" ", "")
+
+	if choice == "file":
+		# if we want to load from a file, we just pass an empty home
+		# and the system will know what to do (show import prompt)
+		return newHome
+
 	# allow the user to populate home with 5 devices
 	while len(newHome.getDevices()) < 5:
 		print(f"\n➕ Adding device {len(newHome.getDevices()) + 1}/5")
@@ -577,15 +585,16 @@ class SmartHomeSystem:
 			messagebox.showerror(title="Error Writing File", message=f"{e}")
 			return
 
-	def importDevices(self):
+	def importDevices(self, warn=True):
 		"""Prompts the user to import devices from a file"""
 		# warn that this will overwrite the current devices
-		sure = messagebox.askyesno(
-			title="Importing devices",
-			message="Importing will overwrite the current devices. Are you sure?"
-		)
-		if not sure:
-			return
+		if warn:
+			sure = messagebox.askyesno(
+				title="Importing devices",
+				message="Importing will overwrite the current devices. Are you sure?"
+			)
+			if not sure:
+				return
 
 		file = filedialog.askopenfile(
 			mode="r",
@@ -618,6 +627,12 @@ class SmartHomeSystem:
 		self.createStaticButtons()
 		self.refreshDeviceList()
 		self.incrementClock()
+
+		# if we were given a home with no devices,
+		# then we should prompt the user to import from a file
+		if len(self.home.getDevices()) == 0:
+			self.importDevices(False)
+
 		self.win.mainloop()
 
 def main():
