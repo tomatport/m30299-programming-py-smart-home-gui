@@ -1,16 +1,3 @@
-class SmartDevice:
-	"""
-		Super class for all smart devices
-	"""
-	def __init__(self):
-		self.switchedOn = False
-
-	def toggleSwitch(self):
-		self.switchedOn = not self.switchedOn
-
-	def getSwitchedOn(self):
-		return self.switchedOn
-
 class SmartPlug():
 	def __init__(self, consumptionRate=0):
 		self.switchedOn = False
@@ -79,10 +66,10 @@ class SmartHome():
 		return self.devices[index]
 	
 	def addDevice(self, device):
-		if not isinstance(device, SmartDevice):
-			raise ValueError("Device must be a SmartDevice")
-
-		self.devices.append(device)
+		if isinstance(device, SmartPlug) or isinstance(device, SmartDoorbell):
+			self.devices.append(device)
+		else:
+			raise ValueError("Device must be a SmartPlug or SmartDoorbell")
 
 	def removeDeviceAt(self, index):
 		if index < 0 or index >= len(self.devices):
@@ -90,6 +77,8 @@ class SmartHome():
 
 		self.devices.pop(index)
 
+	# this should be toggleSwitchAt to match the other names
+	# but that's what the rubric says ¯\_(ツ)_/¯
 	def toggleSwitch(self, index):
 		if index < 0 or index >= len(self.devices):
 			raise ValueError("Index out of range")
@@ -148,6 +137,7 @@ def testSmartDoorbell():
 	print(d)
 
 def testSmartHome():
+	print("Testing SmartHome")
 	# Create an instance of the SmartHome class and two instances of the SmartPlug class
 	# with consumption rates of 45.
 	home = SmartHome() 

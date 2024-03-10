@@ -162,7 +162,7 @@ class SmartHomeSystem:
 
 		importButt = Button(
 			self.footerFrame,
-			text="Import",
+			text="Load from file",
 			image=self.IMAGEIMPORT,
 			compound=LEFT,
 			command=self.importDevices,
@@ -173,7 +173,7 @@ class SmartHomeSystem:
 
 		exportButt = Button(
 			self.footerFrame,
-			text="Export",
+			text="Save to file",
 			image=self.IMAGEEXPORT,
 			compound=LEFT,
 			command=self.exportDevices,
@@ -241,7 +241,7 @@ class SmartHomeSystem:
 			padx=5,
 			highlightthickness=0,
 			bd=0,
-			command=lambda i=i: self.toggleDeviceAt(i)
+			command=lambda: self.toggleDeviceAt(i)
 		)
 		toggleButt.grid(row=i, column=3, pady=5, padx=2.5)
 		widgetList.append(toggleButt)
@@ -273,8 +273,7 @@ class SmartHomeSystem:
 				padx=5,
 				# we need to pass the tk variable here rather than its value
 				# so we can show a warning if it's invalid before adding the device
-				command=lambda i=i, consumptionVar=consumptionVar:
-						self.editPlugConsumptionRate(i, consumptionVar)
+				command=lambda: self.editPlugConsumptionRate(i, consumptionVar)
 			)
 			consumptionConfirmButt.grid(row=i, column=6, pady=5, padx=2.5)
 			widgetList.append(consumptionConfirmButt)
@@ -291,8 +290,7 @@ class SmartHomeSystem:
 			sleepChangeCheckbox = Checkbutton(
 				parentFrame,
 				text="Sleep Mode",
-				command=lambda i=i, sleepMode=invertCurrentSleepStatus:
-						self.setDoorbellSleepMode(i, invertCurrentSleepStatus)
+				command=lambda: self.setDoorbellSleepMode(i, invertCurrentSleepStatus)
 			)
 
 			if device.getSleep():
@@ -308,7 +306,7 @@ class SmartHomeSystem:
 			text="Schedule",
 			image=self.IMAGESCHEDULE,
 			padx=5,
-			command=lambda i=i: self.scheduleDeviceWindow(i)
+			command=lambda: self.scheduleDeviceWindow(i)
 		)
 		scheduleButt.grid(row=i, column=7, pady=5, padx=2.5)
 		widgetList.append(scheduleButt)
@@ -319,7 +317,7 @@ class SmartHomeSystem:
 			image=self.IMAGEDELETE,
 			padx=5,
 			fg="red",
-			command=lambda i=i: self.removeDeviceAt(i)
+			command=lambda: self.removeDeviceAt(i)
 		)
 		removeButt.grid(row=i, column=8, pady=5, padx=2.5)
 		widgetList.append(removeButt)
@@ -391,8 +389,7 @@ class SmartHomeSystem:
 			text="Add a plug",
 			# as with adding a plug, we need to pass the variable here rather than its value
 			# so we can show a warning if it's invalid before editing the device
-			command=lambda addWin=addWin, consumptionVar=consumptionVar:
-					self.addPlug(addWin, consumptionVar)
+			command=lambda: self.addPlug(addWin, consumptionVar)
 		)
 		addPlugButt.grid(row=1, column=0, columnspan=2,
 		                 padx=10, pady=10, sticky="we")
@@ -403,7 +400,7 @@ class SmartHomeSystem:
 		addDoorbellButt = Button(
 			addWin,
 			text="Add a doorbell",
-			command=lambda addWin=addWin: self.addDoorbell(addWin)
+			command=lambda: self.addDoorbell(addWin)
 		)
 		addDoorbellButt.grid(row=3, column=0, columnspan=2,
 		                     padx=10, pady=10, sticky="we")
@@ -545,8 +542,8 @@ class SmartHomeSystem:
 			# bit ugly but it seems to work reliably
 			optionMenu.bind(
 				"<Configure>",
-				lambda event, i=hr, optionVar=optionVar:
-				self.updateDeviceSchedule(index, i, optionsValues[optionsTexts.index(optionVar.get())])
+				lambda event:
+				self.updateDeviceSchedule(index, hr, optionsValues[optionsTexts.index(optionVar.get())])
 			)
 
 			optionMenu.grid(row=hr, column=1, padx=0, pady=2)

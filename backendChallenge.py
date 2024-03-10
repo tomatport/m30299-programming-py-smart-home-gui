@@ -106,6 +106,8 @@ class SmartHome():
 
 		self.devices.pop(index)
 
+	# this should be toggleSwitchAt to match the other names
+	# but that's what the rubric says ¯\_(ツ)_/¯
 	def toggleSwitch(self, index):
 		if index < 0 or index >= len(self.devices):
 			raise ValueError("Index out of range")

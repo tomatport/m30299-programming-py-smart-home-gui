@@ -147,7 +147,7 @@ class SmartHomeSystem:
 			parentFrame,
 			text="Toggle",
 			padx=5,
-			command=lambda i=i: self.toggleDeviceAt(i)
+			command=lambda: self.toggleDeviceAt(i)
 		)
 		
 		toggleButt.grid(row=i, column=1, pady=5, padx=2.5)
@@ -157,7 +157,7 @@ class SmartHomeSystem:
 			parentFrame,
 			text="Edit",
 			padx=5,
-			command=lambda i=i: self.editDeviceWindow(i)
+			command=lambda: self.editDeviceWindow(i)
 		)
 		editButt.grid(row=i, column=2, pady=5, padx=2.5)
 		widgetList.append(editButt)
@@ -167,7 +167,7 @@ class SmartHomeSystem:
 			text="Delete",
 			padx=5,
 			fg="red",
-			command=lambda i=i: self.removeDeviceAt(i)
+			command=lambda: self.removeDeviceAt(i)
 		)
 		removeButt.grid(row=i, column=3, pady=5, padx=2.5)
 		widgetList.append(removeButt)
@@ -225,8 +225,7 @@ class SmartHomeSystem:
 			text="Add a plug",
 			# we need to pass the tk variable here rather than its value
 			# so we can show a warning if it's invalid before adding the device
-			command=lambda addWin=addWin, consumptionVar=consumptionVar:
-					self.addPlug(addWin, consumptionVar)
+			command=lambda: self.addPlug(addWin, consumptionVar)
 		)
 		addPlugButt.grid(row=1, column=0, columnspan=2,
 		                 padx=10, pady=10, sticky=EW)
@@ -237,7 +236,7 @@ class SmartHomeSystem:
 		addDoorbellButt = Button(
 			addWin,
 			text="Add a doorbell",
-			command=lambda addWin=addWin: self.addDoorbell(addWin)
+			command=lambda: self.addDoorbell(addWin)
 		)
 		addDoorbellButt.grid(row=3, column=0, columnspan=2,
 		                     padx=10, pady=10, sticky=EW)
@@ -315,8 +314,7 @@ class SmartHomeSystem:
 				text="Save",
 				# as with adding a plug, we need to pass the variable here rather than its value
 				# so we can show a warning if it's invalid before editing the device
-				command=lambda editWin=editWin, i=i, consumptionVar=consumptionVar:
-						self.editPlugConsumptionRate(editWin, i, consumptionVar)
+				command=lambda: self.editPlugConsumptionRate(editWin, i, consumptionVar)
 			)
 			editButt.grid(row=2, column=1, padx=10, pady=10)
 
@@ -332,8 +330,7 @@ class SmartHomeSystem:
 			editButt = Button(
 				editWin,
 				text="Save",
-				command=lambda editWin=editWin, i=i, sleepMode=sleepModeVar.get():
-						self.setDoorbellSleepMode(editWin, i, sleepMode.get())
+				command=lambda: self.setDoorbellSleepMode(editWin, i, sleepModeVar.get())
 			)
 			editButt.grid(row=2, column=1, padx=10, pady=10)
 
