@@ -542,7 +542,7 @@ class SmartHomeSystem:
 			# bit ugly but it seems to work reliably
 			optionMenu.bind(
 				"<Configure>",
-				lambda event:
+				lambda event, index=index, hr=hr, optionVar=optionVar:
 				self.updateDeviceSchedule(index, hr, optionsValues[optionsTexts.index(optionVar.get())])
 			)
 
